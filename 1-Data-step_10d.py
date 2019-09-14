@@ -30,6 +30,8 @@ LAT1 = -51
 LAT2 = -39
 
 
+
+
 # Uncomment to reprocess GFW effort and Seascape data
 #--------------------------------------------------------------------------------
 
