@@ -16,3 +16,23 @@ wget -q --post-data="sensor=aqua&sdate=2012-01-01&edate=2016-12-31&dtype=L3m&add
 # CHL_a from Aqua (NC)
 # https://oceancolor.gsfc.nasa.gov/forum/oceancolor/topic_show.pl?pid=12520
 wget -q --post-data="sensor=aqua&sdate=2012-01-01&edate=2016-12-31&dtype=L3m&addurl=1&results_as_file=1&search=*L3m_DAY_CHL_chlor_a_4km.nc" -O - https://oceandata.sci.gsfc.nasa.gov/api/file_search |wget -i -
+
+SST from NOAA Reanalysis
+wget ftp://ftp.cdc.noaa.gov/Datasets/noaa.oisst.v2.highres/sst.day.mean.2000.nc
+wget ftp://ftp.cdc.noaa.gov/Datasets/noaa.oisst.v2.highres/sst.day.mean.2001.nc
+wget ftp://ftp.cdc.noaa.gov/Datasets/noaa.oisst.v2.highres/sst.day.mean.2002.nc
+wget ftp://ftp.cdc.noaa.gov/Datasets/noaa.oisst.v2.highres/sst.day.mean.2003.nc
+wget ftp://ftp.cdc.noaa.gov/Datasets/noaa.oisst.v2.highres/sst.day.mean.2004.nc
+wget ftp://ftp.cdc.noaa.gov/Datasets/noaa.oisst.v2.highres/sst.day.mean.2005.nc
+wget ftp://ftp.cdc.noaa.gov/Datasets/noaa.oisst.v2.highres/sst.day.mean.2006.nc
+wget ftp://ftp.cdc.noaa.gov/Datasets/noaa.oisst.v2.highres/sst.day.mean.2007.nc
+wget ftp://ftp.cdc.noaa.gov/Datasets/noaa.oisst.v2.highres/sst.day.mean.2008.nc
+wget ftp://ftp.cdc.noaa.gov/Datasets/noaa.oisst.v2.highres/sst.day.mean.2009.nc
+wget ftp://ftp.cdc.noaa.gov/Datasets/noaa.oisst.v2.highres/sst.day.mean.2010.nc
+wget ftp://ftp.cdc.noaa.gov/Datasets/noaa.oisst.v2.highres/sst.day.mean.2011.nc
+wget ftp://ftp.cdc.noaa.gov/Datasets/noaa.oisst.v2.highres/sst.day.mean.2012.nc
+wget ftp://ftp.cdc.noaa.gov/Datasets/noaa.oisst.v2.highres/sst.day.mean.2013.nc
+wget ftp://ftp.cdc.noaa.gov/Datasets/noaa.oisst.v2.highres/sst.day.mean.2014.nc
+wget ftp://ftp.cdc.noaa.gov/Datasets/noaa.oisst.v2.highres/sst.day.mean.2015.nc
+wget ftp://ftp.cdc.noaa.gov/Datasets/noaa.oisst.v2.highres/sst.day.mean.2016.nc
+

@@ -24,31 +24,37 @@ dat = pd.read_feather('~/Projects/Seascape-and-fishing-effort/data/full_gfw_10d_
 
 # Subset drifting longlines
 #dat = dat[dat.geartype == 'drifting_longlines']
-dat = dat.sort_values('date')
+#dat = dat.sort_values('date')
+
+
 
 # If illegally operating inside EEZ (!= ARG)
-dat.loc[:, 'illegal'] = np.where(((dat['eez'] == True) & (dat['flag'] != 'ARG')), 1, 0)
+dat.loc[:, 'illegal'] = np.where(((dat['eez'] == True) & (dat['flag'] != 'ARG') & (dat['flag'] != 'URY')), 1, 0)
 
 # Illegal if within 10km
 dat.loc[:, 'illegal_10km'] = np.where(((dat['eez'] == True) & (dat['distance_to_eez_km'] <= 10) & (dat['flag'] != 'ARG')), 1, 0)
 
-
 # Illegal if within 20km
 dat.loc[:, 'illegal_20km'] = np.where(((dat['eez'] == True) & (dat['distance_to_eez_km'] <= 20) & (dat['flag'] != 'ARG')), 1, 0)
-
 
 # Illegal if within 30km
 dat.loc[:, 'illegal_30km'] = np.where(((dat['eez'] == True) & (dat['distance_to_eez_km'] <= 30) & (dat['flag'] != 'ARG')), 1, 0)
 
 # Convert true/false eez to 0/1
 dat.loc[:, 'eez'] = dat.eez.astype('uint8')
-dat.loc[:, 'eez_10km'] = dat.eez.astype('uint8')
-dat.loc[:, 'eez_20km'] = dat.eez.astype('uint8')
-dat.loc[:, 'eez_30km'] = dat.eez.astype('uint8')
+dat.loc[:, 'eez_10km'] = dat.eez_10km.astype('uint8')
+dat.loc[:, 'eez_20km'] = dat.eez_20km.astype('uint8')
+dat.loc[:, 'eez_30km'] = dat.eez_30km.astype('uint8')
 
 sum(dat.illegal_10km)/len(dat)
 sum(dat.illegal_20km)/len(dat)
 sum(dat.illegal_30km)/len(dat)
+
+# Calc distance from eez for illegal vessels
+dat.loc[:, 'illegal_distance_to_eez_km'] = np.where((dat['illegal'] == 1), dat['distance_to_eez_km'], 99999999)
+
+test = dat[dat['illegal_distance_to_eez_km'] != 99999999]
+test
 
 # Convert month number to name
 dat.loc[:, 'month_abbr'] = dat.apply(lambda x: calendar.month_abbr[x['month']], 1)
@@ -63,7 +69,10 @@ moddat = dat[['illegal', 'year', 'month_abbr', 'seascape_class', 'sst', 'sst_gra
 
 'sst_grad', 'sst4', 'sst4_grad', 'chlor_a', 'lon1', 'lat1', 'depth_m', 'coast_dist_km', 'port_dist_km', 'eez', 'distance_to_eez_km'
 
-moddat = dat[['illegal', 'year', 'sst']].dropna().reset_index(drop=True)
+moddat = dat[['illegal', 'year', 'sst', 'lat1', 'lon1']].dropna().reset_index(drop=True)
+
+moddat.to_feather('data/test_illegal.feather')
+
 
 seascape_dummies = pd.get_dummies(moddat['seascape_class'], prefix='seascape').reset_index(drop=True)
 month_dummies = pd.get_dummies(moddat['month_abbr']).reset_index(drop=True)
@@ -112,9 +121,9 @@ for year in range(2013, 2017):
     
     #clf = LogisticRegression().fit(X_train, y_train)
     clf = RandomForestClassifier(n_estimators=100).fit(X_train, y_train)
-    y_pred = clf.predict(X_test)
-    y_pred
-    score = accuracy_score(y_test, y_pred)
+    y_test_pred = clf.predict(X_test)
+        
+    score = accuracy_score(y_test, y_test_pred)
     score
     pred_score.append(score)
 

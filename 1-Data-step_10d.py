@@ -91,6 +91,38 @@ LAT2 = -39
 # outdat = outdat.reset_index(drop=True)
 # outdat.to_feather("data/patagonia_shelf_gfw_effort_10d_data.feather")
 
+#Parse: SST Temperature NOAA Reanalysis-----------------------------------------------
+
+
+files = sorted(glob.glob('/data2/SST/NOAA_ESRL/DAILY/*.nc'))
+
+files = files[12:18]
+print(files)
+
+rdat = pd.DataFrame()
+for file_ in files:
+    ds = xr.open_dataset(file_)
+    df = ds.to_dataframe().reset_index()    
+    df = df[(df['lat'] >= LAT1) & (df['lat'] <= LAT2)]
+    # Convert 0-360 to -180 - 180
+    df.loc[:, 'lon'] = np.where(df['lon'] > 180, -360 + df['lon'], df['lon'])
+    df = df[(df['lon'] >= LON1) & (df['lon'] <= LON2)]
+    df.loc[:, 'date'] = df['time'].copy()
+    df = df[['date', 'lon', 'lat', 'sst']]
+    rdat = pd.concat([rdat, df])
+    print(pd.DatetimeIndex(df['date'])[0].year)
+
+
+
+
+rdat = rdat.reset_index()
+rdat = rdat[['date', 'lon', 'lat', 'sst']]
+rdat.to_feather('data/patagonia_shelf_SST_RA_2012-2016.feather')
+
+
+
+
+
 #Parse: SST Temperature -----------------------------------------------
 
 # files = glob.glob('/data2/SST/DAILY/*.nc')
@@ -163,7 +195,6 @@ LAT2 = -39
 
 #Parse: SST4 Temperature -----------------------------------------------
 
-# files = glob.glob('/data2/SST4/DAILY/*.nc')
 
 # rdat = pd.DataFrame()
 # for file_ in files:
@@ -416,10 +447,10 @@ def process_days(dat):
     # Save data
     
     outdat = dat.reset_index(drop=True)
-    #outdat.to_feather(f"data/processed/10d/processed_{date}.feather")
+    outdat.to_feather(f"data/processed/10d/processed_{date}.feather")
     #print(f"{date}: COMPLETE")
 
-    return outdat
+    #return outdat
 
 gb = gfw.groupby('date')
 days = [gb.get_group(x) for x in gb.groups]
@@ -450,7 +481,7 @@ days = [gb.get_group(x) for x in gb.groups]
 #
 #ray.shutdown()
 
-pool = multiprocessing.Pool(50)
+pool = multiprocessing.Pool(30)
 pool.map(process_days, days)
 pool.close()
 
