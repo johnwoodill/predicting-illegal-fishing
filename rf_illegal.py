@@ -22,79 +22,63 @@ import calendar
 # 8Day data
 dat = pd.read_feather('~/Projects/Seascape-and-fishing-effort/data/full_gfw_10d_effort_model_data_8DAY_2012-01-01_2016-12-26.feather')
 
+# DAILY data
+#dat = pd.read_feather('~/Projects/predicting-illegal-fishing/data/full_gfw_10d_illegal_model_data_DAILY_2012-01-01_2016-12-31.feather')
+
 # Subset drifting longlines
-#dat = dat[dat.geartype == 'drifting_longlines']
+dat = dat[dat.geartype == 'drifting_longlines']
 #dat = dat.sort_values('date')
 
-
-
 # If illegally operating inside EEZ (!= ARG)
-dat.loc[:, 'illegal'] = np.where(((dat['eez'] == True) & (dat['flag'] != 'ARG') & (dat['flag'] != 'URY')), 1, 0)
+dat.loc[:, 'illegal'] = np.where(((dat['eez'] == True) & (dat['flag'] != 'ARG')), 1, 0)
 
 # Illegal if within 10km
-dat.loc[:, 'illegal_10km'] = np.where(((dat['eez'] == True) & (dat['distance_to_eez_km'] <= 10) & (dat['flag'] != 'ARG')), 1, 0)
+dat.loc[:, 'illegal_50km'] = np.where(((dat['eez'] == True) & (dat['distance_to_eez_km'] <= 50) & (dat['flag'] != 'ARG')), 1, 0)
 
 # Illegal if within 20km
-dat.loc[:, 'illegal_20km'] = np.where(((dat['eez'] == True) & (dat['distance_to_eez_km'] <= 20) & (dat['flag'] != 'ARG')), 1, 0)
-
-# Illegal if within 30km
-dat.loc[:, 'illegal_30km'] = np.where(((dat['eez'] == True) & (dat['distance_to_eez_km'] <= 30) & (dat['flag'] != 'ARG')), 1, 0)
+dat.loc[:, 'illegal_150km'] = np.where(((dat['eez'] == True) & (dat['distance_to_eez_km'] <= 150) & (dat['flag'] != 'ARG')), 1, 0)
 
 # Convert true/false eez to 0/1
-dat.loc[:, 'eez'] = dat.eez.astype('uint8')
-dat.loc[:, 'eez_10km'] = dat.eez_10km.astype('uint8')
-dat.loc[:, 'eez_20km'] = dat.eez_20km.astype('uint8')
-dat.loc[:, 'eez_30km'] = dat.eez_30km.astype('uint8')
+dat.loc[:, 'illegal'] = dat.illegal.astype('uint8')
+dat.loc[:, 'illegal_50km'] = dat.illegal_50km.astype('uint8')
+dat.loc[:, 'illegal_150km'] = dat.illegal_100km.astype('uint8')
 
-sum(dat.illegal_10km)/len(dat)
-sum(dat.illegal_20km)/len(dat)
-sum(dat.illegal_30km)/len(dat)
+
+sum(dat.illegal)/len(dat)
+sum(dat.illegal_50km)/len(dat)
+sum(dat.illegal_150km)/len(dat)
 
 # Calc distance from eez for illegal vessels
 dat.loc[:, 'illegal_distance_to_eez_km'] = np.where((dat['illegal'] == 1), dat['distance_to_eez_km'], 99999999)
 
-test = dat[dat['illegal_distance_to_eez_km'] != 99999999]
-test
+dat.loc[:, 'illegal_distance_to_eez_50km'] = np.where((dat['illegal_50km'] == 1), dat['distance_to_eez_km'], 99999999)
+
+dat.loc[:, 'illegal_distance_to_eez_150km'] = np.where((dat['illegal_150km'] == 1), dat['distance_to_eez_km'], 99999999)
+
+dat.loc[:, 'year'] = pd.DatetimeIndex(dat['date']).year
+dat.loc[:, 'month'] = pd.DatetimeIndex(dat['date']).month
 
 # Convert month number to name
 dat.loc[:, 'month_abbr'] = dat.apply(lambda x: calendar.month_abbr[x['month']], 1)
 
 # Linear model
 # Get data frame of variables and dummy seascapes
-#moddat = dat[['illegal', 'fishing_hours', 'flag', 'year', 'month', 'seascape_class', 'sst', 'sst_grad', 'sst4', 'sst4_grad', 'chlor_a', 'lon1', 'lat1', 'tonnage', 'depth_m', 'coast_dist_km', 'port_dist_km', 'eez', 'distance_to_eez_km']].dropna().reset_index(drop=True)
+moddat = dat[['illegal_50km', 'year', 'month_abbr', 'seascape_class', 'sst', 'sst_grad', 'sst4', 'sst4_grad', 'chlor_a', 'lon1', 'lat1', 'depth_m', 'coast_dist_km', 'port_dist_km', 'eez', 'distance_to_eez_km']].dropna().reset_index(drop=True)
 
-#moddat = dat[['illegal', 'year', 'month_abbr', 'seascape_class', 'sst', 'sst_grad', 'sst4', 'sst4_grad', 'chlor_a', 'lon1', 'lat1', 'tonnage', 'depth_m', 'coast_dist_km', 'port_dist_km', 'eez', 'distance_to_eez_km']].dropna().reset_index(drop=True)
-
-moddat = dat[['illegal', 'year', 'month_abbr', 'seascape_class', 'sst', 'sst_grad', 'sst4', 'sst4_grad', 'chlor_a', 'lon1', 'lat1', 'depth_m', 'coast_dist_km', 'port_dist_km', 'eez', 'distance_to_eez_km']].dropna().reset_index(drop=True)
-
-'sst_grad', 'sst4', 'sst4_grad', 'chlor_a', 'lon1', 'lat1', 'depth_m', 'coast_dist_km', 'port_dist_km', 'eez', 'distance_to_eez_km'
-
-moddat = dat[['illegal', 'year', 'sst', 'lat1', 'lon1']].dropna().reset_index(drop=True)
-
-moddat.to_feather('data/test_illegal.feather')
-
-
+# Dummy variables for seascape and dummies
 seascape_dummies = pd.get_dummies(moddat['seascape_class'], prefix='seascape').reset_index(drop=True)
 month_dummies = pd.get_dummies(moddat['month_abbr']).reset_index(drop=True)
 
-#flag_dummies = pd.get_dummies(moddat['flag']).reset_index(drop=True)
-
-# Combine dummy variables
-#moddat = pd.concat([moddat, seascape_dummies, month_dummies, flag_dummies], axis=1)
-
-moddat = pd.concat([moddat, month_dummies], axis=1)
+# Concat dummy variables
+moddat = pd.concat([moddat, seascape_dummies, month_dummies], axis=1)
 
 # Get X, y
-y = moddat[['year', 'illegal']].reset_index(drop=True)
+y = moddat[['year', 'illegal_50km']].reset_index(drop=True)
 
-#moddat = moddat.drop(columns = ['month', 'illegal', 'seascape_class', 'flag'])
+# Drop dummy variables and prediction
+moddat = moddat.drop(columns = ['month_abbr', 'illegal_50km', 'seascape_class'])
 
-moddat = moddat.drop(columns = ['month_abbr', 'illegal', 'seascape_class'])
-
-moddat = moddat.drop(columns = ['month_abbr', 'illegal'])
-
-moddat = moddat.drop(columns = 'illegal')
-
+# Build data for model
 X = moddat
 X.columns
 X.head()
@@ -103,10 +87,11 @@ y.head()
 # Cross-validate model
 pred_score = []
 roc_dat = pd.DataFrame()
+sdat = pd.DataFrame()
 for year in range(2013, 2017):
     
-    X_train = X[X.year < year]
-    y_train = y[y.year < year]
+    X_train = X[X.year != year]
+    y_train = y[y.year != year]
 
     X_test = X[X.year == year]
     y_test = y[y.year == year]
@@ -116,52 +101,66 @@ for year in range(2013, 2017):
     X_train = X_train.drop(columns = ['year'])
     X_test = X_test.drop(columns = ['year'])
 
-    y_train = y_train['illegal']
-    y_test = y_test['illegal']
+    y_train = y_train['illegal_50km']
+    y_test = y_test['illegal_50km']
     
     #clf = LogisticRegression().fit(X_train, y_train)
     clf = RandomForestClassifier(n_estimators=100).fit(X_train, y_train)
-    y_test_pred = clf.predict(X_test)
+
+    # Get out-of-sample predictions
+    ydat = pd.DataFrame({'illegal_50km': y_test, 'pred_illegal': clf.predict(X_test)})
+
+    # Get true pos
+    ydat1 = ydat[(ydat.illegal_50km == 1)]
+    true = sum(ydat1.pred_illegal) / sum(ydat1.illegal_50km)
+    
+    # Get false pos
+    ydat2 = ydat[(ydat.pred_illegal == 1)]
+    false_true = 0 if sum(ydat2.pred_illegal) == 0 else sum(ydat2.illegal_50km) / sum(ydat2.pred_illegal)
+
+    perc_true = true
+    perc_false_true = sum(ydat2.pred_illegal - ydat2.illegal_50km)/len(ydat2)
+         
+    main_perc_true = perc_true
         
-    score = accuracy_score(y_test, y_test_pred)
-    score
-    pred_score.append(score)
+    print(f"% True pos: {round(perc_true, 2)}   -   % False pos: {round(perc_false_true, 2)}")
 
-    probs = clf.predict_proba(X_test)
-    preds = probs[:,1]
-    fpr, tpr, threshold = metrics.roc_curve(y_test, preds)
-    roc_auc = metrics.auc(fpr, tpr)
+    # ROC Curve
+    for i in np.linspace(0, 1, 11):
+        threshold = i
+        predicted_proba = clf.predict_proba(X_test)
+        predicted = (predicted_proba [:, 1] >= threshold).astype('int')
+        ydat = pd.DataFrame({'illegal_50km': y_test, 'pred_illegal': predicted})
+   
+        ydat1 = ydat[(ydat.illegal_50km == 1)]
+        true = sum(ydat1.pred_illegal) / sum(ydat1.illegal_50km)
+        
+        ydat2 = ydat[(ydat.pred_illegal == 1)]
+        false_true = 0 if sum(ydat2.pred_illegal) == 0 else sum(ydat2.illegal_50km) / sum(ydat2.pred_illegal)
 
-    outdat = pd.DataFrame({'pred_year': year, 'fpr': fpr, 'tpr': tpr, 'thresh': threshold})
-    roc_dat = pd.concat([roc_dat, outdat])
+        perc_true = true
+        perc_false_true = sum(ydat2.pred_illegal - ydat2.illegal_50km)/len(ydat2)
+            
+        print(f"% True pos: {round(perc_true, 2)}   -   % False pos: {round(perc_false_true, 2)}")
+        ldat = pd.DataFrame({'year': [year], 'threshold': [i], 'tpr': [perc_true], 'fpr': [perc_false_true], 'Acccuracy': f"{year} - {round(main_perc_true, 2)}%"})
+        sdat = pd.concat([sdat, ldat])
 
-print(pred_score)
 
-# method I: plt
-import matplotlib.pyplot as plt
-plt.title('Receiver Operating Characteristic')
-plt.plot(fpr, tpr, 'b', label = 'AUC = %0.2f' % roc_auc)
-plt.legend(loc = 'lower right')
+
+sns.lineplot('fpr', 'tpr', hue = 'Acccuracy', data = sdat)
 plt.plot([0, 1], [0, 1],'r--')
 plt.xlim([0, 1])
 plt.ylim([0, 1])
 plt.ylabel('True Positive Rate')
 plt.xlabel('False Positive Rate')
+plt.title('Predicting Illegal Activity 50km from EEZ')
 plt.show()
 
 
-clf = RandomForestClassifier().fit(X_train, y_train)
-clf.predict_proba(X_train)
-
+# Feature importance
 fea_import = pd.DataFrame({'variable': X_train.columns , 'importance': clf.feature_importances_})
 fea_import = fea_import.sort_values('importance', ascending=False)
 #fea_import.to_feather('data/feature_importance_rf_illegal.feather')
 sns.barplot('importance', 'variable', data = fea_import)
 plt.show()
 
-
-clf.predict_proba(X_train)[:][1]
-
-
-
-cross_validate(clf, X_train, y_train)

@@ -22,6 +22,13 @@ import calendar
 # 8Day data
 dat = pd.read_feather('~/Projects/Seascape-and-fishing-effort/data/full_gfw_10d_effort_model_data_8DAY_2012-01-01_2016-12-26.feather')
 
+
+# DAILY data
+#dat = pd.read_feather('~/Projects/predicting-illegal-fishing/data/full_gfw_10d_illegal_model_data_DAILY_2012-01-01_2016-12-31.feather')
+
+# Subset drifting longlines
+dat = dat[dat.geartype == 'drifting_longlines']
+
 # If illegally operating inside EEZ (!= ARG)
 dat.loc[:, 'illegal'] = np.where(((dat['eez'] == True) & (dat['flag'] != 'ARG') & (dat['flag'] != 'URY')), 1, 0)
 
@@ -34,13 +41,17 @@ dat.loc[:, 'illegal_distance_to_eez_km'] = np.where((dat['illegal'] == 1), dat['
 mdat = dat[dat['illegal_distance_to_eez_km'] != 99999999]
 mdat
 
-mdat = dat.copy()
+mdat.loc[:, 'year'] = pd.DatetimeIndex(mdat['date']).year
+
+mdat.loc[:, 'month'] = pd.DatetimeIndex(mdat['date']).month
 
 # Convert month number to name
 mdat.loc[:, 'month_abbr'] = mdat.apply(lambda x: calendar.month_abbr[x['month']], 1)
 
 # Linear model
-moddat = mdat[['illegal_distance_to_eez_km', 'year', 'month_abbr', 'seascape_class', 'sst', 'sst_grad', 'sst4', 'sst4_grad', 'chlor_a', 'lon1', 'lat1', 'depth_m', 'coast_dist_km', 'port_dist_km']].dropna().reset_index(drop=True)
+#moddat = mdat[['illegal_distance_to_eez_km', 'year', 'month_abbr', 'seascape_class', 'sst', 'sst_grad', 'sst4', 'sst4_grad', 'chlor_a', 'lon1', 'lat1', 'depth_m', 'coast_dist_km', 'port_dist_km']].dropna().reset_index(drop=True)
+
+moddat = mdat[['illegal_distance_to_eez_km', 'seascape_class', 'year', 'month_abbr', 'sst', 'sst4', 'chlor_a', 'lon1', 'lat1', 'coast_dist_km', 'port_dist_km']].dropna().reset_index(drop=True)
 
 seascape_dummies = pd.get_dummies(moddat['seascape_class'], prefix='seascape').reset_index(drop=True)
 month_dummies = pd.get_dummies(moddat['month_abbr']).reset_index(drop=True)
@@ -51,8 +62,8 @@ moddat.head()
 # Get X, y
 y = moddat[['year', 'illegal_distance_to_eez_km']].reset_index(drop=True)
 
-moddat = moddat.drop(columns = ['month_abbr', 'illegal_distance_to_eez_km', 'seascape_class'])
-
+moddat = moddat.drop(columns = ['month_abbr', 'seascape_class', 'illegal_distance_to_eez_km'])
+moddat.head()
 
 X = moddat
 X.columns
@@ -64,8 +75,8 @@ pred_score = []
 roc_dat = pd.DataFrame()
 for year in range(2013, 2017):
     
-    X_train = X[X.year < year]
-    y_train = y[y.year < year]
+    X_train = X[X.year != year]
+    y_train = y[y.year != year]
 
     X_test = X[X.year == year]
     y_test = y[y.year == year]
@@ -81,7 +92,11 @@ for year in range(2013, 2017):
     #clf = LogisticRegression().fit(X_train, y_train)
     clf = RandomForestRegressor(n_estimators=100).fit(X_train, y_train)
     y_test_pred = clf.predict(X_test)
-    
+    np.mean(y_test_pred**2)
+
+    test = pd.DataFrame({'true': y_test, 'pred': y_test_pred})
+    test[test.true > 0]
+
     rsqr_train = clf.score(X_train, y_train)
     #rsqr_train
     

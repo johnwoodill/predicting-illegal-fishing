@@ -96,30 +96,31 @@ LAT2 = -39
 #Parse: SST Temperature NOAA Reanalysis-----------------------------------------------
 
 
-files = sorted(glob.glob('/data2/SST/NOAA_ESRL/DAILY/*.nc'))
+# files = sorted(glob.glob('/data2/SST/NOAA_ESRL/DAILY/*.nc'))
 
-files = files[12:18]
-print(files)
+# 2012-2016
+# files = files[12:18]
+# print(files)
 
-rdat = pd.DataFrame()
-for file_ in files:
-    ds = xr.open_dataset(file_)
-    df = ds.to_dataframe().reset_index()    
-    df = df[(df['lat'] >= LAT1) & (df['lat'] <= LAT2)]
-    # Convert 0-360 to -180 - 180
-    df.loc[:, 'lon'] = np.where(df['lon'] > 180, -360 + df['lon'], df['lon'])
-    df = df[(df['lon'] >= LON1) & (df['lon'] <= LON2)]
-    df.loc[:, 'date'] = df['time'].copy()
-    df = df[['date', 'lon', 'lat', 'sst']]
-    rdat = pd.concat([rdat, df])
-    print(pd.DatetimeIndex(df['date'])[0].year)
+# rdat = pd.DataFrame()
+# for file_ in files:
+#     ds = xr.open_dataset(file_)
+#     df = ds.to_dataframe().reset_index()    
+#     df = df[(df['lat'] >= LAT1) & (df['lat'] <= LAT2)]
+#     # Convert 0-360 to -180 - 180
+#     df.loc[:, 'lon'] = np.where(df['lon'] > 180, -360 + df['lon'], df['lon'])
+#     df = df[(df['lon'] >= LON1) & (df['lon'] <= LON2)]
+#     df.loc[:, 'date'] = df['time'].copy()
+#     df = df[['date', 'lon', 'lat', 'sst']]
+#     rdat = pd.concat([rdat, df])
+#     print(pd.DatetimeIndex(df['date'])[0].year)
 
 
 
 
-rdat = rdat.reset_index()
-rdat = rdat[['date', 'lon', 'lat', 'sst']]
-rdat.to_feather('data/patagonia_shelf_SST_RA_2012-2016.feather')
+# rdat = rdat.reset_index()
+# rdat = rdat[['date', 'lon', 'lat', 'sst']]
+# rdat.to_feather('data/patagonia_shelf_SST_RA_2012-2016.feather')
 
 
 
