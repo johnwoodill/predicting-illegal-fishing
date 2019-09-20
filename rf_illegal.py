@@ -132,7 +132,7 @@ for year in range(2013, 2017):
     print(f"% True pos: {round(perc_true, 2)}   -   % False pos: {round(perc_false_true, 2)}")
 
     # ROC Curve
-    for i in np.linspace(0, 1, 11):
+    for i in np.linspace(0, 1, 1111):
         threshold = i
         predicted_proba = clf.predict_proba(X_test)
         predicted = (predicted_proba [:, 1] >= threshold).astype('int')
