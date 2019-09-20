@@ -160,7 +160,7 @@ plt.xlim([0, 1])
 plt.ylim([0, 1])
 plt.ylabel('True Positive Rate')
 plt.xlabel('False Positive Rate')
-plt.title('Predicting Illegal Activity 50km from EEZ')
+plt.title('Predicting Chinese Fishing Vessels Illegal Activity')
 
 plt.savefig('figures/roc_curve.pdf')
 plt.show()
