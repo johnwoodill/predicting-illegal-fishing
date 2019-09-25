@@ -8,6 +8,8 @@ library(stringr)
 # Full data
 dat <- read_feather('~/Projects/predicting-illegal-fishing/data/full_gfw_10d_effort_model_data_8DAY_2012-01-01_2016-12-26.feather')
 
+dat <- read_feather('~/Projects/Seascape-and-fishing-effort/data/full_gfw_10d_effort_model_data_8DAY_2012-01-01_2016-12-26.feather')
+
 # Model results
 mdat <- read_feather('~/Projects/predicting-illegal-fishing/data/illegal_cross_val_dat.feather')
 
@@ -27,7 +29,7 @@ month <- month(dat$date)
 dat$year_month <- paste0(dat$month, "-", dat$year)
 dat <- filter(dat, fishing_hours > 0)
 dat <- filter(dat, flag %in% c("ARG", "CHN"))
-dat$illegal <- ifelse(dat$eez == TRUE, ifelse(dat$flag != "ARG", 1, 0), 0)
+dat$illegal <- ifelse(dat$eez == TRUE, ifelse(dat$flag != "ARG", ifelse(dat$fishing_hours > 0, 1, 0), 0), 0)
 
 pdat <- dat %>% 
   group_by(year_month) %>% 

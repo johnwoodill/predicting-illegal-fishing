@@ -23,7 +23,7 @@ import calendar
 dat = pd.read_feather('~/Projects/Seascape-and-fishing-effort/data/full_gfw_10d_effort_model_data_8DAY_2012-01-01_2016-12-26.feather')
 
 # DAILY data
-#dat = pd.read_feather('~/Projects/predicting-illegal-fishing/data/full_gfw_10d_illegal_model_data_DAILY_2012-01-01_2016-12-31.feather')
+dat = pd.read_feather('~/Projects/predicting-illegal-fishing/data/full_gfw_10d_illegal_model_data_DAILY_2012-01-01_2016-12-31.feather')
 
 # Subset drifting longlines
 #dat = dat[dat.geartype == 'drifting_longlines']
@@ -37,20 +37,10 @@ dat = dat[(dat['flag'] == 'CHN') | (dat['flag'] == 'ARG')]
 # If illegally operating inside EEZ (!= ARG)
 dat.loc[:, 'illegal'] = np.where(((dat['eez'] == True) & (dat['fishing_hours'] > 0) & (dat['flag'] != 'ARG') ), 1, 0)
 
-# Illegal if within 50km
-dat.loc[:, 'illegal_50km'] = np.where(((dat['eez'] == True) & (dat['fishing_hours'] > 0 ) & (dat['distance_to_eez_km'] <= 50) & (dat['flag'] != 'ARG')), 1, 0)
-
-# Illegal if within 100km
-dat.loc[:, 'illegal_100km'] = np.where(((dat['eez'] == True) & (dat['fishing_hours'] > 0 ) & (dat['distance_to_eez_km'] <= 100) & (dat['flag'] != 'ARG')), 1, 0)
-
 # Convert true/false eez to 0/1
 dat.loc[:, 'illegal'] = dat.illegal.astype('uint8')
-dat.loc[:, 'illegal_50km'] = dat.illegal_50km.astype('uint8')
-dat.loc[:, 'illegal_100km'] = dat.illegal_100km.astype('uint8')
 
 sum(dat.illegal)/len(dat)
-sum(dat.illegal_50km)/len(dat)
-sum(dat.illegal_100km)/len(dat)
 
 # Get year month
 dat.loc[:, 'year'] = pd.DatetimeIndex(dat['date']).year
@@ -87,7 +77,7 @@ roc_dat = pd.DataFrame()
 tpr_fpr = pd.DataFrame()
 feffort = pd.DataFrame()
 sdat = pd.DataFrame()
-for year in range(2013, 2017):
+for year in range(2012, 2017):
     
     # Get training data
     X_train = X[X.year != year]
