@@ -6,7 +6,7 @@ library(lubridate)
 library(stringr)
 
 # Full data
-dat <- read_feather('~/Projects/predicting-illegal-fishing/data/full_gfw_10d_effort_model_data_8DAY_2012-01-01_2016-12-26.feather')
+# dat <- read_feather('~/Projects/predicting-illegal-fishing/data/full_gfw_10d_effort_model_data_8DAY_2012-01-01_2016-12-26.feather')
 
 dat <- read_feather('~/Projects/Seascape-and-fishing-effort/data/full_gfw_10d_effort_model_data_8DAY_2012-01-01_2016-12-26.feather')
 
@@ -19,8 +19,9 @@ fea <- read_feather('~/Projects/predicting-illegal-fishing/data/feature_importan
 # Fishing Effort predictions
 fe <- read_feather('~/Projects/predicting-illegal-fishing/data/predicted_effort_data.feather')
 
-
-
+# Custom color palette
+cbp1 <- c("#999999", "#E69F00", "#56B4E9", "#009E73",
+          "#0072B2", "#D55E00", "#CC79A7")
 
 # ------------------------------------------------------------------------------------
 # Figure ***
@@ -37,20 +38,26 @@ pdat <- dat %>%
             month = mean(month),
             total_illegal = sum(illegal))
 
-pdat$month_name <- month.name[pdat$month]
+pdat$month_name <- month.abb[pdat$month]
 pdat <- arrange(pdat, month_name)
-pdat$month_name <- factor(pdat$month_name, levels = month.name)
+pdat$month_name <- factor(pdat$month_name, levels = month.abb)
 
-ggplot(pdat, aes(year_month, total_illegal, fill=factor(month_name))) + 
+ggplot(pdat, aes(month_name, total_illegal, fill=factor(year))) + 
+  geom_bar(stat='identity', position = position_stack(reverse = TRUE), width = 0.75) +
+  scale_fill_viridis_d(option = "D") +
   theme_tufte(12) +
   labs(x=NULL, y="Count of Illegal Chinese Activity") +
-  geom_bar(stat = "identity") +
-  scale_fill_viridis_d() +
-  theme(legend.title = element_blank(),
+  theme(legend.position = c(.95, .825),
+        legend.direction = 'vertical',
+        legend.justification = 'center',
+        legend.text = element_text(size=8),
+        legend.title = element_blank(),
+        plot.title = element_text(hjust = 0.5),
         panel.border = element_rect(colour = "black", fill=NA, size=1)) +
-  coord_flip() +
   NULL
 
+
+ggsave("~/Projects/predicting-illegal-fishing/figures/sum_illegal_activity.pdf", width=8, height=4)
 
 
 
@@ -123,7 +130,8 @@ ggplot(mdat, aes(recall, prec, color=factor(year_label))) +
   # scale_color_manual(values = viridis(6, option = "D")) +
   scale_color_manual(values = cbp1) +
   geom_line() +
-  theme(legend.position = c(.20, .20),
+  theme(legend.background = element_rect(colour = 'grey', fill = 'white', linetype='solid'),
+        legend.position = c(.225, .25),
         legend.direction = 'vertical',
         legend.justification = 'center',
         legend.text = element_text(size=8),
