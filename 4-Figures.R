@@ -23,7 +23,7 @@ fe <- read_feather('~/Projects/predicting-illegal-fishing/data/predicted_effort_
 # ------------------------------------------------------------------------------------
 # Figure ***
 dat$year <- year(dat$date)
-dat$month <- month(dat$date)
+month <- month(dat$date)
 dat$year_month <- paste0(dat$month, "-", dat$year)
 dat <- filter(dat, fishing_hours > 0)
 dat <- filter(dat, flag %in% c("ARG", "CHN"))
@@ -149,7 +149,7 @@ fe$label <- factor(fe$label, levels = c("Unexplained Illegal Fishing Effort", "E
 
 ggplot(fe, aes(x=year, y=value, fill=factor(label))) + 
   geom_bar(stat='identity') +
-  labs(x=NULL, y="Total Fishing Hours") +
+  labs(x=NULL, y="Total Illegal Fishing Hours") +
   theme_tufte(12) +
   scale_fill_manual(values = c("#22A884FF", "#2A788EFF")) +
   theme(legend.position = c(.20, .90),
