@@ -144,8 +144,8 @@ ggsave("~/Projects/predicting-illegal-fishing/figures/precision_recall.pdf", wid
 fe <- gather(fe, key=label, value = value, -year)
 fe <- filter(fe, label != "total_fishing")
 
-fe$label <- ifelse(fe$label == "tpr_fishing", "Explained Fishing Effort", "Unexplained Fishing Effort")
-fe$label <- factor(fe$label, levels = c("Unexplained Fishing Effort", "Explained Fishing Effort"))
+fe$label <- ifelse(fe$label == "tpr_fishing", "Explained Illegal Fishing Effort", "Unexplained Illegal Fishing Effort")
+fe$label <- factor(fe$label, levels = c("Unexplained Illegal Fishing Effort", "Explained Illegal Fishing Effort"))
 
 ggplot(fe, aes(x=year, y=value, fill=factor(label))) + 
   geom_bar(stat='identity') +
