@@ -289,3 +289,138 @@ feffort = feffort.to_feather('data/predicted_5k_effort_data.feather')
 # Save precision-recall data
 sdat = sdat.reset_index(drop=True)
 sdat.to_feather('data/illegal_5k_cross_val_dat.feather')
+
+
+
+
+
+
+
+
+
+#-----------------------------------------------------
+# Predicting illegal with different variables
+# Linear model
+# Get data frame of variables and dummy seascapes
+moddat = dat[['illegal', 'year', 'fishing_hours', 'month_abbr', 'seascape_class', 'sst', 'sst_grad', 'chlor_a', 'lon1', 'lat1', 'depth_m', 'coast_dist_km', 'port_dist_km', 'eez', 'distance_to_eez_km']].dropna().reset_index(drop=True)
+
+moddat = dat[['illegal', 'year', 'fishing_hours', 'month_abbr', 'seascape_class', 'sst', 'sst_grad']].dropna().reset_index(drop=True)
+
+#moddat = dat[['illegal', 'year', 'fishing_hours', 'month_abbr', 'seascape_class']].dropna().reset_index(drop=True)
+
+# Dummy variables for seascape and dummies
+seascape_dummies = pd.get_dummies(moddat['seascape_class'], prefix='seascape').reset_index(drop=True)
+month_dummies = pd.get_dummies(moddat['month_abbr']).reset_index(drop=True)
+
+# Concat dummy variables
+moddat = pd.concat([moddat, seascape_dummies, month_dummies], axis=1)
+
+# Get X, y
+y = moddat[['year', 'illegal']].reset_index(drop=True)
+
+# Drop dummy variables and prediction
+moddat = moddat.drop(columns = ['month_abbr', 'illegal', 'seascape_class'])
+
+# Build data for model
+X = moddat
+X.columns
+X.head()
+y.head()
+
+# Cross-validate model
+roc_dat = pd.DataFrame()
+tpr_fpr = pd.DataFrame()
+feffort = pd.DataFrame()
+sdat = pd.DataFrame()
+for year in range(2012, 2017):
+    
+    # Get training data
+    X_train = X[X.year != year]
+    y_train = y[y.year != year]
+
+    # Get test data
+    X_test = X[X.year == year]
+    y_test = y[y.year == year]
+
+    print(f"Training Years: {X_train.year.unique()} - Test Year: {X_test.year.unique()}")
+
+    fishing_hours = X_test['fishing_hours']
+
+    # Drop year
+    X_train = X_train.drop(columns = ['year', 'fishing_hours'])
+    X_test = X_test.drop(columns = ['year', 'fishing_hours'])
+
+    # Set binary variable
+    y_train = y_train['illegal']
+    y_test = y_test['illegal']
+    
+    #clf = LogisticRegression().fit(X_train, y_train)
+    clf = RandomForestClassifier(n_estimators=100).fit(X_train, y_train)
+
+    # Get predicted probabilities for sensitivity analysis
+    pred_proba = clf.predict_proba(X_test)
+    proba = pred_proba[:, 1]
+
+    # Get predictions and fishing hours
+    y_pred = clf.predict(X_test)
+
+    # data frame of true, pred, and fishing hours
+    pred_dat = pd.DataFrame({'y_true': y_test, 'y_pred': y_pred, 'fishing_hours': fishing_hours})
+    
+    tf_dat = pred_dat[pred_dat['y_true'] == 1]
+    tf = sum(tf_dat['fishing_hours'])
+
+    # True positive
+    fh_tpr_dat = pred_dat[(pred_dat['y_true'] == 1) & (pred_dat['y_pred'] == 1)]
+
+    # False positive
+    fh_fpr_dat = pred_dat[((pred_dat['y_true'] == 0) & (pred_dat['y_pred'] != 0)) | ((pred_dat['y_true'] == 1) & (pred_dat['y_pred'] != 1))]
+    
+    tpr_fishing_hours = sum(fh_tpr_dat['fishing_hours'])
+    fpr_fishing_hours = sum(fh_fpr_dat['fishing_hours'])
+    total_fishing_hours = sum(pred_dat['fishing_hours'])
+
+    feffort_indat = pd.DataFrame({'year': [year], 'total_fishing': [tf], 'tpr_fishing': [tpr_fishing_hours], 'fpr_fishing_hours': [fpr_fishing_hours]})
+    feffort = pd.concat([feffort, feffort_indat])
+    
+    # Precision-recall across thresholds
+    # Precision = tp / ( tp + fp )
+    # Recall = tn / ( tn + fp )
+    precision, recall, thresholds = precision_recall_curve(y_test, proba)
+
+    # Test predictions
+    y_pred = clf.predict(X_test)
+
+    # F1 score = 2 * precision * recall / precision + recall
+    f1 = f1_score(y_test, y_pred)
+
+    # calculate precision-recall AUC
+    auc_m = auc(recall, precision)
+
+    # calculate average precision score
+    ap = average_precision_score(y_test, proba)
+    print('f1=%.3f auc=%.3f ap=%.3f' % (f1, auc_m, ap))
+
+    ddat = pd.DataFrame({'year': year, 'prec': precision, 'recall': recall, 'f1': f1, 'auc':auc_m, 'ap':ap})
+
+    sdat = pd.concat([sdat, ddat])
+
+# Feature importance
+fea_import = pd.DataFrame({'variable': X_train.columns , 'importance': clf.feature_importances_})
+fea_import = fea_import.sort_values('importance', ascending=False)
+fea_import = fea_import.reset_index(drop=True)
+#fea_import.to_feather('data/feature_importance_rf_illegal.feather')
+
+sns.barplot('importance', 'variable', data = fea_import)
+plt.show()
+
+
+# Save fishing hours data
+feffort = feffort.reset_index(drop=True)
+feffort = feffort.to_feather('data/predicted_min_model_effort_data.feather')
+
+# Save precision-recall data
+sdat = sdat.reset_index(drop=True)
+sdat.to_feather('data/illegal_min_model_cross_val_dat.feather')
+
+

@@ -23,12 +23,22 @@ fe <- read_feather('~/Projects/predicting-illegal-fishing/data/predicted_effort_
 cbp1 <- c("#999999", "#E69F00", "#56B4E9", "#009E73",
           "#0072B2", "#D55E00", "#CC79A7")
 
+
+
+
+ddat <- dat %>% group_by(date) %>% summarise(sillegal = sum(illegal)) %>% ungroup()
+max(ddat$sillegal)
+
+ddat <- filter(dat)
+
+ddat
+
 # ------------------------------------------------------------------------------------
 # Figure ***
 dat$year <- year(dat$date)
 month <- month(dat$date)
 dat$year_month <- paste0(dat$month, "-", dat$year)
-dat <- filter(dat, fishing_hours > 0)
+#dat <- filter(dat, fishing_hours > 0)
 dat <- filter(dat, flag %in% c("ARG", "CHN"))
 dat$illegal <- ifelse(dat$eez == TRUE, ifelse(dat$flag != "ARG", ifelse(dat$fishing_hours > 0, 1, 0), 0), 0)
 
