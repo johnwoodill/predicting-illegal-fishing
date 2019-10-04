@@ -227,13 +227,13 @@ LAT2 = -39
 # lon2 eastern edge
 
 # Global fish watch 10d processed data
-gfw = pd.read_feather("data/patagonia_shelf_gfw_effort_10d_DAILY.feather")
+# gfw = pd.read_feather("data/patagonia_shelf_gfw_effort_10d_DAILY.feather")
 
-# sea surface temp
-sst = pd.read_feather('data/patagonia_shelf_SST_RA_DAILY_2012-2016.feather')
+# # sea surface temp
+# sst = pd.read_feather('data/patagonia_shelf_SST_RA_DAILY_2012-2016.feather')
 
-# Chlor
-chl = pd.read_feather('data/patagonia_shelf_CHL_DAILY_2012-2016.feather')
+# # Chlor
+# chl = pd.read_feather('data/patagonia_shelf_CHL_DAILY_2012-2016.feather')
 
 # gfw.head()
 # sst.head()
@@ -259,67 +259,67 @@ chl = pd.read_feather('data/patagonia_shelf_CHL_DAILY_2012-2016.feather')
 #gfw = gfw.head(50)
 
 
-def dist(lat1, lon1, lat2, lon2):
-    return np.sqrt( (lat2 - lat1)**2 + (lon2 - lon1)**2)
+# def dist(lat1, lon1, lat2, lon2):
+#     return np.sqrt( (lat2 - lat1)**2 + (lon2 - lon1)**2)
 
 
 
-def find_sst(lat, lon):
+# def find_sst(lat, lon):
 
-    lat1 = lat - .15
-    lat2 = lat + .15
-    lon1 = lon - .15
-    lon2 = lon + .15
+#     lat1 = lat - .15
+#     lat2 = lat + .15
+#     lon1 = lon - .15
+#     lon2 = lon + .15
 
-    indat = sst[(sst['lon'].values >= lon1) & (sst['lon'].values <= lon2) & (sst['lat'].values >= lat1) & (sst['lat'].values <= lat2)] 
+#     indat = sst[(sst['lon'].values >= lon1) & (sst['lon'].values <= lon2) & (sst['lat'].values >= lat1) & (sst['lat'].values <= lat2)] 
     
-    distances = indat.apply(
-        lambda row: dist(lat, lon, row['lat'], row['lon']), 
-        axis=1)
-    return indat.loc[distances.idxmin(), 'sst']
+#     distances = indat.apply(
+#         lambda row: dist(lat, lon, row['lat'], row['lon']), 
+#         axis=1)
+#     return indat.loc[distances.idxmin(), 'sst']
     
-    #return (indat.loc[distances.idxmin(), 'sst'], indat.loc[distances.idxmin(), 'sst_grad'])
+#     #return (indat.loc[distances.idxmin(), 'sst'], indat.loc[distances.idxmin(), 'sst_grad'])
 
-def find_chlor(lat, lon):
+# def find_chlor(lat, lon):
 
-    lat1 = lat - .03
-    lat2 = lat + .03
-    lon1 = lon - .03
-    lon2 = lon + .03
+#     lat1 = lat - .03
+#     lat2 = lat + .03
+#     lon1 = lon - .03
+#     lon2 = lon + .03
 
-    indat = chl[(chl['lon'].values >= lon1) & (chl['lon'].values <= lon2) & (chl['lat'].values >= lat1) & (chl['lat'].values <= lat2)] 
+#     indat = chl[(chl['lon'].values >= lon1) & (chl['lon'].values <= lon2) & (chl['lat'].values >= lat1) & (chl['lat'].values <= lat2)] 
     
-    distances = indat.apply(lambda row: dist(lat, lon, row['lat'], row['lon']), axis=1)
+#     distances = indat.apply(lambda row: dist(lat, lon, row['lat'], row['lon']), axis=1)
         
-    return indat.loc[distances.idxmin(), 'chlor_a']
+#     return indat.loc[distances.idxmin(), 'chlor_a']
 
 
 
-@ray.remote
-def process_days(dat):
-    date = dat['date'].iat[0]
+#@ray.remote
+# def process_days(dat):
+#     date = dat['date'].iat[0]
     
         
-    # Link sst and gradient to effort
-    #dat.loc[:, 'sst'], dat.loc[:, 'sst_grad'] = zip(*dat.apply(lambda row: find_sst(row['lat1'], row['lon1']), axis=1))
+#     # Link sst and gradient to effort
+#     #dat.loc[:, 'sst'], dat.loc[:, 'sst_grad'] = zip(*dat.apply(lambda row: find_sst(row['lat1'], row['lon1']), axis=1))
 
-    # Only sst
-    dat.loc[:, 'sst'] = dat.apply(lambda row: find_sst(row['lat1'], row['lon1']), axis=1)
+#     # Only sst
+#     dat.loc[:, 'sst'] = dat.apply(lambda row: find_sst(row['lat1'], row['lon1']), axis=1)
 
-    # Link chlor to effort
-    dat.loc[:, 'chlor_a'] = dat.apply(lambda row: find_chlor(row['lat1'], row['lon1']), axis=1)
+#     # Link chlor to effort
+#     dat.loc[:, 'chlor_a'] = dat.apply(lambda row: find_chlor(row['lat1'], row['lon1']), axis=1)
 
-    print(f"4-Save data to data/processed/10d/DAILY/processed_{date}.feather")
+#     print(f"4-Save data to data/processed/10d/DAILY/processed_{date}.feather")
     
-    # Save data
-    outdat = dat.reset_index(drop=True)
-    outdat.to_feather(f"data/processed/10d/DAILY/processed_{date}.feather")
-    #print(f"{date}: COMPLETE")
+#     # Save data
+#     outdat = dat.reset_index(drop=True)
+#     outdat.to_feather(f"data/processed/10d/DAILY/processed_{date}.feather")
+#     #print(f"{date}: COMPLETE")
 
     #return outdat
 
-gb = gfw.groupby('date')
-days = [gb.get_group(x) for x in gb.groups]
+# gb = gfw.groupby('date')
+# days = [gb.get_group(x) for x in gb.groups]
 
 # # Debug
 #days = days[3].reset_index(drop=True)
@@ -338,43 +338,43 @@ days = [gb.get_group(x) for x in gb.groups]
 
 #test2.head()
 
-ray.init()
+# ray.init()
 #1626474458
 #1000000000
 #0000
-results = ray.get([process_days.remote(i) for i in days])
+# results = ray.get([process_days.remote(i) for i in days])
 
 #
 #ray.shutdown()
 
 
 
-pool = multiprocessing.Pool(50)
-pool.map(process_days, days)
-pool.close()
+# pool = multiprocessing.Pool(50)
+# pool.map(process_days, days)
+# pool.close()
 
 
 
 
 
 # Combine processed files
-files = glob.glob('data/processed/10d/DAILY/*.feather')
-files
-list_ = []
-for file in files:
-    df = pd.read_feather(file)
-    list_.append(df)
-    mdat = pd.concat(list_, sort=False)
+# files = glob.glob('data/processed/10d/DAILY/*.feather')
+# files
+# list_ = []
+# for file in files:
+#     df = pd.read_feather(file)
+#     list_.append(df)
+#     mdat = pd.concat(list_, sort=False)
 
-# Manually remove veseels near land in eez
-#mdat.loc[:, 'eez'] = np.where(np.logical_and(mdat['lat1'] > -48, mdat['lon1'] < -65), True, mdat['eez'])
-#mdat.loc[:, 'eez'] = np.where(np.logical_and(mdat['lat1'] > -44, mdat['lon1'] < -63), True, mdat['eez'])
-#mdat.loc[:, 'eez'] = np.where(np.logical_and(mdat['lat1'] > -40, mdat['lon1'] < -61), True, mdat['eez'])
+# # Manually remove veseels near land in eez
+# #mdat.loc[:, 'eez'] = np.where(np.logical_and(mdat['lat1'] > -48, mdat['lon1'] < -65), True, mdat['eez'])
+# #mdat.loc[:, 'eez'] = np.where(np.logical_and(mdat['lat1'] > -44, mdat['lon1'] < -63), True, mdat['eez'])
+# #mdat.loc[:, 'eez'] = np.where(np.logical_and(mdat['lat1'] > -40, mdat['lon1'] < -61), True, mdat['eez'])
 
-mdat = mdat.reset_index(drop=True)
-mdat.to_feather('data/full_gfw_10d_illegal_model_data_DAILY_2012-01-01_2016-12-31.feather')
+# mdat = mdat.reset_index(drop=True)
+# mdat.to_feather('data/full_gfw_10d_illegal_model_data_DAILY_2012-01-01_2016-12-31.feather')
 
-mdat = pd.read_feather('data/full_gfw_10d_illegal_model_data_DAILY_2012-01-01_2016-12-31.feather')
+# mdat = pd.read_feather('data/full_gfw_10d_illegal_model_data_DAILY_2012-01-01_2016-12-31.feather')
 
 #------------------------------------------------------------------
 # Calculate distance to shore
@@ -490,6 +490,12 @@ def distance_to_eez(lon, lat):
     #lat2 = p1.y
     return haversine(lon, lat, lon2, lat2)
 
+# Assign EEZ indicator for GFW
+def eez_check(lon, lat):
+    pnts = gpd.GeoDataFrame(geometry=[Point(lon, lat)])
+    check = pnts.assign(**{key: pnts.within(geom) for key, geom in polys.items()})
+    return check.Argentina_EEZ.values[0]
+
 
 # Get Google API key
 #api_key = open('Google_api_key.txt', 'r')
@@ -517,7 +523,7 @@ dat = pd.read_feather('data/full_gfw_10d_illegal_model_data_DAILY_2012-01-01_201
 coastline = get_coastline('ARG')
 
 # Get to Dask Dataframe
-dask_df = dd.from_pandas(dat, npartitions=20)
+dask_df = dd.from_pandas(dat, npartitions=40)
 
 
 # Get Distance to coast (km)
@@ -541,15 +547,26 @@ dask_df['port_dist_km'] = pd.Series(port_dist)
 
 print("Calc distance to closest eez")
 
-# Calculate distance to closest eez   
+# Get polygons to check eez
 shpfile1 = gpd.read_file("data/EEZ/eez_v10.shp")
 arg = shpfile1[shpfile1.Territory1 == 'Argentina'].reset_index(drop=True)  #268
+polys = gpd.GeoSeries({'Argentina_EEZ': arg.geometry})
 poly = arg.geometry[0]
 pol_ext = LinearRing(poly.exterior.coords)
+
+# Determine if in eez
+dask_df.loc[:, 'eez'] = dask_df.apply(lambda x: eez_check(x['lon1'], x['lat1']), axis=1, meta=('f8')).compute()
+
 
 # Calc distance to eez
 dask_df['distance_to_eez_km'] = dask_df.apply((lambda x: distance_to_eez(x['lon1'], x['lat1'])), axis=1, meta=('f8')).compute(scheduler='processes')
 
+
+# If illegally operating inside EEZ (!= ARG)
+dask_df.loc[:, 'illegal'] = np.where(((dask_df['eez'] == True) & (dask_df['fishing_hours'] > 0) & (dask_df['flag'] != 'ARG') ), 1, 0)
+
+# Convert true/false eez to 0/1
+dat.loc[:, 'illegal'] = dat.illegal.astype('uint8')
 
 # Convert Dask DF to Pandas DF
 dat = dask_df.compute()
@@ -559,3 +576,9 @@ dat.to_feather('data/full_gfw_10d_illegal_model_data_DAILY_2012-01-01_2016-12-31
 
 #mdat = pd.read_feather('data/full_gfw_10d_effort_model_data_DAILY_2012-01-01_2016-12-31.feather')
 #mdat.to_feather('data/test.feather')
+
+# shpfile1 = gpd.read_file("data/EEZ/eez_v10.shp")
+# arg = shpfile1[shpfile1.Territory1 == 'Argentina'].reset_index(drop=True)  #268
+
+
+
