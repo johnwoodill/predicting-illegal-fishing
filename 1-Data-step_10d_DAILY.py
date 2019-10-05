@@ -555,18 +555,12 @@ poly = arg.geometry[0]
 pol_ext = LinearRing(poly.exterior.coords)
 
 # Determine if in eez
-dask_df.loc[:, 'eez'] = dask_df.apply(lambda x: eez_check(x['lon1'], x['lat1']), axis=1, meta=('f8')).compute()
+dask_df['eez'] = dask_df.apply(lambda x: eez_check(x['lon1'], x['lat1']), axis=1, meta=('f8')).compute()
 
 
 # Calc distance to eez
 dask_df['distance_to_eez_km'] = dask_df.apply((lambda x: distance_to_eez(x['lon1'], x['lat1'])), axis=1, meta=('f8')).compute(scheduler='processes')
 
-
-# If illegally operating inside EEZ (!= ARG)
-dask_df.loc[:, 'illegal'] = np.where(((dask_df['eez'] == True) & (dask_df['fishing_hours'] > 0) & (dask_df['flag'] != 'ARG') ), 1, 0)
-
-# Convert true/false eez to 0/1
-dat.loc[:, 'illegal'] = dat.illegal.astype('uint8')
 
 # Convert Dask DF to Pandas DF
 dat = dask_df.compute()

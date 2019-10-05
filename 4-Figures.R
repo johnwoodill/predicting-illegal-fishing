@@ -27,9 +27,13 @@ cbp1 <- c("#999999", "#E69F00", "#56B4E9", "#009E73",
 
 
 ddat <- dat %>% group_by(date) %>% summarise(sillegal = sum(illegal)) %>% ungroup()
-max(ddat$sillegal)
 
-ddat <- filter(dat)
+max(ddat$sillegal)
+# 2016-02-26
+
+ddat1 <- filter(dat, date == "2016-02-26")
+ddat2 <- filter(dat, )
+
 
 ddat
 

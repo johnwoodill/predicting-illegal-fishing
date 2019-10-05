@@ -1,7 +1,3 @@
-#import ray
-
-#import modin.pandas as pd
-
 import dask
 import dask.dataframe as dd
 import pandas as pd
@@ -38,14 +34,6 @@ from dask.diagnostics import ProgressBar
 
 ProgressBar().register()
 
-from dask.distributed import Client
-
-client = Client('192.168.1.88:8786')
-
-client = Client('localhost:8786')
-client = Client()
-client
-
 LON1 = -68
 LON2 = -51
 LAT1 = -51
@@ -55,52 +43,52 @@ LAT2 = -39
 # Uncomment to reprocess GFW effort and Seascape data
 #--------------------------------------------------------------------------------
 
-OC_8D = ['2012-01-01', '2012-01-09', '2012-01-17', '2012-01-25', '2012-02-02',
- '2012-02-10', '2012-02-18', '2012-02-26', '2012-03-05', '2012-03-13',
- '2012-03-21', '2012-03-29', '2012-04-06', '2012-04-14', '2012-04-22',
- '2012-04-30', '2012-05-08', '2012-05-16', '2012-05-24', '2012-06-01',
- '2012-06-09', '2012-06-17', '2012-06-25', '2012-07-03', '2012-07-11',
- '2012-07-19', '2012-07-27', '2012-08-04', '2012-08-12', '2012-08-20',
- '2012-08-28', '2012-09-05', '2012-09-13', '2012-09-21', '2012-09-29',
- '2012-10-07', '2012-10-15', '2012-10-23', '2012-10-31', '2012-11-08',
- '2012-11-16', '2012-11-24', '2012-12-02', '2012-12-10', '2012-12-18',
- '2012-12-26', '2013-01-01', '2013-01-09', '2013-01-17', '2013-01-25',
- '2013-02-02', '2013-02-10', '2013-02-18', '2013-02-26', '2013-03-06',
- '2013-03-14', '2013-03-22', '2013-03-30', '2013-04-07', '2013-04-15',
- '2013-04-23', '2013-05-01', '2013-05-09', '2013-05-17', '2013-05-25',
- '2013-06-02', '2013-06-10', '2013-06-18', '2013-06-26', '2013-07-04',
- '2013-07-12', '2013-07-20', '2013-07-28', '2013-08-05', '2013-08-13',
- '2013-08-21', '2013-08-29', '2013-09-06', '2013-09-14', '2013-09-22',
- '2013-09-30', '2013-10-08', '2013-10-16', '2013-10-24', '2013-11-01',
- '2013-11-09', '2013-11-17', '2013-11-25', '2013-12-03', '2013-12-11',
- '2013-12-19', '2013-12-27', '2014-01-01', '2014-01-09', '2014-01-17',
- '2014-01-25', '2014-02-02', '2014-02-10', '2014-02-18', '2014-02-26',
- '2014-03-06', '2014-03-14', '2014-03-22', '2014-03-30', '2014-04-07',
- '2014-04-15', '2014-04-23', '2014-05-01', '2014-05-09', '2014-05-17',
- '2014-05-25', '2014-06-02', '2014-06-10', '2014-06-18', '2014-06-26',
- '2014-07-04', '2014-07-12', '2014-07-20', '2014-07-28', '2014-08-05',
- '2014-08-13', '2014-08-21', '2014-08-29', '2014-09-06', '2014-09-14',
- '2014-09-22', '2014-09-30', '2014-10-08', '2014-10-16', '2014-10-24',
- '2014-11-01', '2014-11-09', '2014-11-17', '2014-11-25', '2014-12-03',
- '2014-12-11', '2014-12-19', '2014-12-27', '2015-01-01', '2015-01-09',
- '2015-01-17', '2015-01-25', '2015-02-02', '2015-02-10', '2015-02-18',
- '2015-02-26', '2015-03-06', '2015-03-14', '2015-03-22', '2015-03-30',
- '2015-04-07', '2015-04-15', '2015-04-23', '2015-05-01', '2015-05-09',
- '2015-05-17', '2015-05-25', '2015-06-02', '2015-06-10', '2015-06-18',
- '2015-06-26', '2015-07-04', '2015-07-12', '2015-07-20', '2015-07-28',
- '2015-08-05', '2015-08-13', '2015-08-21', '2015-08-29', '2015-09-06',
- '2015-09-14', '2015-09-22', '2015-09-30', '2015-10-08', '2015-10-16',
- '2015-10-24', '2015-11-01', '2015-11-09', '2015-11-17', '2015-11-25',
- '2015-12-03', '2015-12-11', '2015-12-19', '2015-12-27', '2016-01-01',
- '2016-01-09', '2016-01-17', '2016-01-25', '2016-02-02', '2016-02-10',
- '2016-02-18', '2016-02-26', '2016-03-05', '2016-03-13', '2016-03-21',
- '2016-03-29', '2016-04-06', '2016-04-14', '2016-04-22', '2016-04-30',
- '2016-05-08', '2016-05-16', '2016-05-24', '2016-06-01', '2016-06-09',
- '2016-06-17', '2016-06-25', '2016-07-03', '2016-07-11', '2016-07-19',
- '2016-07-27', '2016-08-04', '2016-08-12', '2016-08-20', '2016-08-28',
- '2016-09-05', '2016-09-13', '2016-09-21', '2016-09-29', '2016-10-07',
- '2016-10-15', '2016-10-23', '2016-10-31', '2016-11-08', '2016-11-16',
- '2016-11-24', '2016-12-02', '2016-12-10', '2016-12-18', '2016-12-26']
+# OC_8D = ['2012-01-01', '2012-01-09', '2012-01-17', '2012-01-25', '2012-02-02',
+#  '2012-02-10', '2012-02-18', '2012-02-26', '2012-03-05', '2012-03-13',
+#  '2012-03-21', '2012-03-29', '2012-04-06', '2012-04-14', '2012-04-22',
+#  '2012-04-30', '2012-05-08', '2012-05-16', '2012-05-24', '2012-06-01',
+#  '2012-06-09', '2012-06-17', '2012-06-25', '2012-07-03', '2012-07-11',
+#  '2012-07-19', '2012-07-27', '2012-08-04', '2012-08-12', '2012-08-20',
+#  '2012-08-28', '2012-09-05', '2012-09-13', '2012-09-21', '2012-09-29',
+#  '2012-10-07', '2012-10-15', '2012-10-23', '2012-10-31', '2012-11-08',
+#  '2012-11-16', '2012-11-24', '2012-12-02', '2012-12-10', '2012-12-18',
+#  '2012-12-26', '2013-01-01', '2013-01-09', '2013-01-17', '2013-01-25',
+#  '2013-02-02', '2013-02-10', '2013-02-18', '2013-02-26', '2013-03-06',
+#  '2013-03-14', '2013-03-22', '2013-03-30', '2013-04-07', '2013-04-15',
+#  '2013-04-23', '2013-05-01', '2013-05-09', '2013-05-17', '2013-05-25',
+#  '2013-06-02', '2013-06-10', '2013-06-18', '2013-06-26', '2013-07-04',
+#  '2013-07-12', '2013-07-20', '2013-07-28', '2013-08-05', '2013-08-13',
+#  '2013-08-21', '2013-08-29', '2013-09-06', '2013-09-14', '2013-09-22',
+#  '2013-09-30', '2013-10-08', '2013-10-16', '2013-10-24', '2013-11-01',
+#  '2013-11-09', '2013-11-17', '2013-11-25', '2013-12-03', '2013-12-11',
+#  '2013-12-19', '2013-12-27', '2014-01-01', '2014-01-09', '2014-01-17',
+#  '2014-01-25', '2014-02-02', '2014-02-10', '2014-02-18', '2014-02-26',
+#  '2014-03-06', '2014-03-14', '2014-03-22', '2014-03-30', '2014-04-07',
+#  '2014-04-15', '2014-04-23', '2014-05-01', '2014-05-09', '2014-05-17',
+#  '2014-05-25', '2014-06-02', '2014-06-10', '2014-06-18', '2014-06-26',
+#  '2014-07-04', '2014-07-12', '2014-07-20', '2014-07-28', '2014-08-05',
+#  '2014-08-13', '2014-08-21', '2014-08-29', '2014-09-06', '2014-09-14',
+#  '2014-09-22', '2014-09-30', '2014-10-08', '2014-10-16', '2014-10-24',
+#  '2014-11-01', '2014-11-09', '2014-11-17', '2014-11-25', '2014-12-03',
+#  '2014-12-11', '2014-12-19', '2014-12-27', '2015-01-01', '2015-01-09',
+#  '2015-01-17', '2015-01-25', '2015-02-02', '2015-02-10', '2015-02-18',
+#  '2015-02-26', '2015-03-06', '2015-03-14', '2015-03-22', '2015-03-30',
+#  '2015-04-07', '2015-04-15', '2015-04-23', '2015-05-01', '2015-05-09',
+#  '2015-05-17', '2015-05-25', '2015-06-02', '2015-06-10', '2015-06-18',
+#  '2015-06-26', '2015-07-04', '2015-07-12', '2015-07-20', '2015-07-28',
+#  '2015-08-05', '2015-08-13', '2015-08-21', '2015-08-29', '2015-09-06',
+#  '2015-09-14', '2015-09-22', '2015-09-30', '2015-10-08', '2015-10-16',
+#  '2015-10-24', '2015-11-01', '2015-11-09', '2015-11-17', '2015-11-25',
+#  '2015-12-03', '2015-12-11', '2015-12-19', '2015-12-27', '2016-01-01',
+#  '2016-01-09', '2016-01-17', '2016-01-25', '2016-02-02', '2016-02-10',
+#  '2016-02-18', '2016-02-26', '2016-03-05', '2016-03-13', '2016-03-21',
+#  '2016-03-29', '2016-04-06', '2016-04-14', '2016-04-22', '2016-04-30',
+#  '2016-05-08', '2016-05-16', '2016-05-24', '2016-06-01', '2016-06-09',
+#  '2016-06-17', '2016-06-25', '2016-07-03', '2016-07-11', '2016-07-19',
+#  '2016-07-27', '2016-08-04', '2016-08-12', '2016-08-20', '2016-08-28',
+#  '2016-09-05', '2016-09-13', '2016-09-21', '2016-09-29', '2016-10-07',
+#  '2016-10-15', '2016-10-23', '2016-10-31', '2016-11-08', '2016-11-16',
+#  '2016-11-24', '2016-12-02', '2016-12-10', '2016-12-18', '2016-12-26']
 
 # # ----------------------------------------------------------------------
 # # Parse: GFW Effort Data -----------------------------------------------
@@ -113,7 +101,7 @@ OC_8D = ['2012-01-01', '2012-01-09', '2012-01-17', '2012-01-25', '2012-02-02',
 
 # list_ = []
 # outdat = pd.DataFrame()
-# # # Append files in subdir
+# # Append files in subdir
 # for i in range(len(OC_8D)):
 #     file_ = f"{GFW_DIR}/{OC_8D[i]}.csv"
 #     #print(file_)
@@ -131,29 +119,8 @@ OC_8D = ['2012-01-01', '2012-01-09', '2012-01-17', '2012-01-25', '2012-02-02',
 
 # outdat.head()
 
-# For 10d, attach vessel data
+# # For 10d, attach vessel data
 # outdat = outdat.merge(vessels, on='mmsi')
-
-# # Assign EEZ indicator for GFW
-# def eez_check(lon, lat):
-#     pnts = gpd.GeoDataFrame(geometry=[Point(lon, lat)])
-#     check = pnts.assign(**{key: pnts.within(geom) for key, geom in polys.items()})
-#     return check.Argentina_EEZ.values[0]
-
-
-# shpfile1 = gpd.read_file("data/EEZ/eez_v10.shp")
-# arg = shpfile1[shpfile1.Territory1 == 'Argentina'].reset_index(drop=True)  #268
-
-# # #lat = -45
-# # #lon = -63
-
-# # # Get polygons to check
-# polys = gpd.GeoSeries({'Argentina_EEZ': arg.geometry})
-
-# # # Get lat/lon for vessels
-# outdat.loc[:, 'eez'] = outdat.apply(lambda x: eez_check(x['lon1'], x['lat1']), axis=1)
-
-# outdat.head()
 
 # outdat = outdat.reset_index(drop=True)
 # outdat.to_feather("data/patagonia_shelf_gfw_effort_10d_8DAY.feather")
@@ -385,20 +352,39 @@ def dist(lat1, lon1, lat2, lon2):
 
 
 
+def haversine(lon1, lat1, lon2, lat2):
+    """
+    Calculate the great circle distance between two points 
+    on the earth (specified in decimal degrees)
+    """
+    # convert decimal degrees to radians 
+    lon1, lat1, lon2, lat2 = map(radians, [lon1, lat1, lon2, lat2])
+    # haversine formula 
+    dlon = lon2 - lon1 
+    dlat = lat2 - lat1 
+    a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
+    c = 2 * asin(sqrt(a)) 
+    r = 6371 # Radius of earth in kilometers. Use 3956 for miles
+    return c * r
+
+
 
 # Get seascape lat/lon
-def find_seascape(lat, lon):
+def find_seascape(date, lat, lon):
     # lat = -51
     # lon = -68
-    lat1 = lat - .05
-    lat2 = lat + .05
-    lon1 = lon - .05
-    lon2 = lon + .05
-    indat = sea[(sea['lon'].values >= lon1) & (sea['lon'].values <= lon2) & (sea['lat'].values >= lat1) & (sea['lat'].values <= lat2)] 
-    #distances = indat.apply(lambda row: dist(lat, lon, row['lat'], row['lon']), axis=1)
-    distances = indat.apply(
-        lambda row: dist(lat, lon, row['lat'], row['lon']), 
-        axis=1)
+    lat1 = lat - .15
+    lat2 = lat + .15
+    lon1 = lon - .15
+    lon2 = lon + .15
+    
+    indat = sea[sea['date'] == date]
+    indat = indat[(indat['lon'].values >= lon1) & 
+                  (indat['lon'].values <= lon2) & 
+                  (indat['lat'].values >= lat1) & 
+                  (indat['lat'].values <= lat2)] 
+    
+    distances = indat.apply(lambda row: dist(lat, lon, row['lat'], row['lon']), axis=1)
     #rdat = pd.DataFrame({"seascape_class": [indat.loc[distances.idxmin(), 'seascape_class']], "seascape_prob": [indat.loc[distances.idxmin(), 'seascape_prob']]})
     #print(rdat)
     #return rdat
@@ -407,13 +393,15 @@ def find_seascape(lat, lon):
 
 
 
-def find_sst(lat, lon):
+def find_sst(date, lat, lon):
     lat1 = lat - .15
     lat2 = lat + .15
     lon1 = lon - .15
     lon2 = lon + .15
-    indat = sst[(sst['lon'].values >= lon1) & (sst['lon'].values <= lon2) & (sst['lat'].values >= lat1) & (sst['lat'].values <= lat2)] 
-    indat
+    
+    indat = sst[sst['date'] == date]
+    indat = indat[(indat['lon'].values >= lon1) & (indat['lon'].values <= lon2) & (indat['lat'].values >= lat1) & (indat['lat'].values <= lat2)] 
+    
     distances = indat.apply(
         lambda row: dist(lat, lon, row['lat'], row['lon']), 
         axis=1)
@@ -424,93 +412,44 @@ def find_sst(lat, lon):
 
 
 
-def find_chlor(lat, lon):
+def find_chlor(date, lat, lon):
     lat1 = lat - .05
     lat2 = lat + .05
     lon1 = lon - .05
     lon2 = lon + .05
-    indat = chl[(chl['lon'].values >= lon1) & (chl['lon'].values <= lon2) & (chl['lat'].values >= lat1) & (chl['lat'].values <= lat2)] 
+    
+    indat = chl[chl['date'] == date]
+    indat = indat[(indat['lon'].values >= lon1) & (indat['lon'].values <= lon2) & (indat['lat'].values >= lat1) & (indat['lat'].values <= lat2)] 
     distances = indat.apply(lambda row: dist(lat, lon, row['lat'], row['lon']), axis=1)
     return indat.loc[distances.idxmin(), 'chlor_a']
 
 
 
-@ray.remote
-def process_days(dat):
-    date = dat['date'].iat[0]
-    #print(f"Processing data for: {date}")
-    #print("1-Linking Effort and Seascape")
-    # Link seascape to effort
-    dat.loc[:, 'seascape_class'], dat.loc[:, 'seascape_prob'] = zip(*dat.apply(lambda row: find_seascape(row['lat1'], row['lon1']), axis=1))
-    #print("2-Linking Effort and SST")
-    # Link sst to effort with gradient
-    # dat.loc[:, 'sst'], dat.loc[:, 'sst_grad'] = zip(*dat.apply(lambda row: find_sst(row['lat1'], row['lon1']), axis=1))
-    # Without gradient
-    dat.loc[:, 'sst'] = dat.apply(lambda row: find_sst(row['lat1'], row['lon1']), axis=1)
-    #print("3-Linking Effort and CHL")
-    # Link sst to effort
-    dat.loc[:, 'chlor_a'] = dat.apply(lambda row: find_chlor(row['lat1'], row['lon1']), axis=1)
-    print(f"4-Save data to data/processed/10d/8DAY/processed_{date}.feather")
-    # Save data
-    outdat = dat.reset_index(drop=True)
-    outdat.to_feather(f"data/processed/10d/8DAY/processed_{date}.feather")
-    return 1
-    #print(f"{date}: COMPLETE")
-    #return outdat
+def coast_dist(lon, lat):
+    lat1 = lat - 5
+    lat2 = lat + 5
+    lon1 = lon - 5
+    lon2 = lon + 5
+    indat = coastline[(coastline['lat'].values >= lat1) & (coastline['lat'].values <= lat2) & (coastline['lon'].values >= lon1) & (coastline['lon'].values <= lon2)] 
+    distances = indat.apply(lambda row: haversine(lon, lat, row['lon'], row['lat']), axis=1)
+    return (distances[distances.idxmin()])
+
+
+def port_dist(lon, lat):
+    indat = ports
+    indat.loc[:, 'distance'] = indat.apply(lambda row: haversine(lon, lat, row['lon'], row['lat']), axis=1)
+    indat = indat.sort_values('distance')
+    return (indat['port'].iat[0], indat['distance'].iat[0])
 
 
 
-
-gb = gfw.groupby('date')
-days = [gb.get_group(x) for x in gb.groups]
-
-days = days[0:3]
-
-# # Debug
-# days = days[0].reset_index(drop=True)
-#days = days.loc[1:5, :]
-# dat = days
-# process_days(days)
-
-#dat = days[141]
-
-#process_days(dat)
-
-#test2 = sst[sst.date == '2012-01-01']
-
-#test2.head()
-
-ray.init()
-results = ray.get([process_days.remote(i) for i in days])
-print(results)
-ray.shutdown()
+# Assign EEZ indicator for GFW
+def eez_check(lon, lat):
+    pnts = gpd.GeoDataFrame(geometry=[Point(lon, lat)])
+    check = pnts.assign(**{key: pnts.within(geom) for key, geom in polys.items()})
+    return check.Argentina_EEZ.values[0]
 
 
-# pool = multiprocessing.Pool(50)
-# pool.map(process_days, days)
-# pool.close()
-
-# print("Combine files")
-
-# # Combine processed files
-# files = glob.glob('data/processed/10d/8DAY/*.feather')
-# files
-# list_ = []
-# for file in files:
-#     df = pd.read_feather(file)
-#     list_.append(df)
-#     mdat = pd.concat(list_, sort=False)
-
-# # Manually remove veseels near land in eez
-# #mdat.loc[:, 'eez'] = np.where(np.logical_and(mdat['lat1'] > -48, mdat['lon1'] < -65), True, mdat['eez'])
-# #mdat.loc[:, 'eez'] = np.where(np.logical_and(mdat['lat1'] > -44, mdat['lon1'] < -63), True, mdat['eez'])
-# #mdat.loc[:, 'eez'] = np.where(np.logical_and(mdat['lat1'] > -40, mdat['lon1'] < -61), True, mdat['eez'])
-
-# mdat = mdat.reset_index(drop=True)
-# mdat.to_feather('data/full_gfw_10d_effort_model_data_8DAY_2012-01-01_2016-12-26.feather')
-
-#------------------------------------------------------------------
-# Calculate distance to shore
 
 def extract_geom_meta(country):
     '''
@@ -565,42 +504,7 @@ def get_ports():
     return port_df
 
 
-
-def haversine(lon1, lat1, lon2, lat2):
-    """
-    Calculate the great circle distance between two points 
-    on the earth (specified in decimal degrees)
-    """
-    # convert decimal degrees to radians 
-    lon1, lat1, lon2, lat2 = map(radians, [lon1, lat1, lon2, lat2])
-    # haversine formula 
-    dlon = lon2 - lon1 
-    dlat = lat2 - lat1 
-    a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
-    c = 2 * asin(sqrt(a)) 
-    r = 6371 # Radius of earth in kilometers. Use 3956 for miles
-    return c * r
-
-
-
-def coast_dist(lon, lat):
-    lat1 = lat - 5
-    lat2 = lat + 5
-    indat = coastline[(coastline['lat'].values >= lat1) & (coastline['lat'].values <= lat2)] 
-    distances = indat.apply(lambda row: haversine(lon, lat, row['lon'], row['lat']), axis=1)
-    return (distances[distances.idxmin()])
-
-
-
-
-def port_dist(lon, lat):
-    indat = ports
-    indat.loc[:, 'distance'] = indat.apply(lambda row: haversine(lon, lat, row['lon'], row['lat']), axis=1)
-    indat = indat.sort_values('distance')
-    return (indat['port'].iat[0], indat['distance'].iat[0])
-
-
-
+# Do not process with api
 # def get_depth(lon, lat):
 #     request = Request('https://maps.googleapis.com/maps/api/elevation/json?locations={0},{1}&key={2}'.format(lat, lon, gkey))
 #     response = urlopen(request).read() 
@@ -624,6 +528,157 @@ def distance_to_eez(lon, lat):
     return haversine(lon, lat, lon2, lat2)
 
 
+
+# ---------------------------------------------------------------------
+# Main function to process data
+def process_days(dat):    
+    
+    # Date to save file as
+    date = dat['date'].iat[0]
+        
+    # ------------------------------------
+    #print("1-Processing Seascapes")
+    dat['seascape_class'], dat['seascape_prob'] = zip(*dat.apply(lambda row: find_seascape(row['date'], row['lat1'], row['lon1']), axis=1))
+        
+    # ------------------------------------
+    #print("2-Processing SST and SST Gradient")
+    # Link sst to effort with gradient
+    # sst, sst_grad = zip(*dat.apply(lambda row: find_sst(row['lat1'], row['lon1']), axis=1))
+    # dat['sst'] = sst
+    # dat['sst_grad'] = sst_grad
+    
+    # print("2-Processing SST w/o Gradient")
+    dat['sst'] = dat.apply(lambda row: find_sst(row['date'], row['lat1'], row['lon1']), axis=1)
+        
+    # ------------------------------------
+    #print("3-Processing CHL")
+    dat['chlor_a'] = dat.apply(lambda row: find_chlor(row['date'], row['lat1'], row['lon1']), axis=1)
+    
+    # ------------------------------------
+    # print("4-Processing distance to coast")
+    dat['coast_dist_km'] = dat.apply((lambda x: coast_dist(x['lon1'], x['lat1'])), axis=1)
+
+    # ------------------------------------
+    # print("5-Processing port name and distance")
+    dat['port'], dat['port_dist_km'] = zip(*dat.apply((lambda x: port_dist(x['lon1'], x['lat1'])), axis=1))
+   
+    # ------------------------------------
+    # print("6-Processing distance to EEZ line")
+    dat['distance_to_eez_km'] = dat.apply((lambda x: distance_to_eez(x['lon1'], x['lat1'])), axis=1)
+    
+    # ------------------------------------
+    # print("7-Processing depth")
+    # dat['depth_m'] = dat.progress_apply(lambda x: get_depth(x['lon1'], x['lat1']), axis=1)
+    
+    # ------------------------------------
+    # print("8-Assigning EEZ True or False")
+    dat['eez'] = dat.apply((lambda x: eez_check(x['lon1'], x['lat1'])), axis=1)
+        
+    # ------------------------------------
+    print(f"4-Save data to data/processed/10d/8DAY/processed_{date}.feather")
+    
+    # Save data
+    #print(dat.columns)
+    outdat = dat.reset_index(drop=True)
+    outdat.to_feather(f"data/processed/10d/8DAY/processed_{date}.feather")
+    
+    #return 1
+
+
+# ------------------------------------
+# Setup before parallel processing
+
+# Distance to coastline
+coastline = get_coastline('ARG')
+
+# Calculate distance to closest eez   
+shpfile1 = gpd.read_file("data/EEZ/eez_v10.shp")
+arg = shpfile1[shpfile1.Territory1 == 'Argentina'].reset_index(drop=True)  #268
+polys = gpd.GeoSeries({'Argentina_EEZ': arg.geometry})
+poly = arg.geometry[0]
+pol_ext = LinearRing(poly.exterior.coords)
+
+# Distance to closests port
+ports = get_ports()
+
+
+# ------------------------------------
+# Dask parallel processing
+
+# Debugging
+#gfw = gfw[gfw.date == '2012-01-01']
+#dat = gfw
+#process_days(dat)
+
+# dask_gfw = dd.from_pandas(gfw, npartitions=50)
+# dask_gfw.groupby(['date'], group_keys=True).apply((lambda x: process_days(x)), axis=1, meta=('int')).compute(scheduler='processes')
+
+
+# ------------------------------------
+# Standard Parallel processing
+gb = gfw.groupby('date')
+days = [gb.get_group(x) for x in gb.groups]
+
+pool = multiprocessing.Pool(50)
+pool.map(process_days, days)
+pool.close()
+
+
+# Combine processed files
+files = glob.glob('data/processed/10d/8DAY/*.feather')
+files
+list_ = []
+for file in files:
+    df = pd.read_feather(file)
+    list_.append(df)
+    mdat = pd.concat(list_, sort=False)
+
+# # Manually remove veseels near land in eez
+# #mdat.loc[:, 'eez'] = np.where(np.logical_and(mdat['lat1'] > -48, mdat['lon1'] < -65), True, mdat['eez'])
+# #mdat.loc[:, 'eez'] = np.where(np.logical_and(mdat['lat1'] > -44, mdat['lon1'] < -63), True, mdat['eez'])
+# #mdat.loc[:, 'eez'] = np.where(np.logical_and(mdat['lat1'] > -40, mdat['lon1'] < -61), True, mdat['eez'])
+
+# Convert to data frame and save
+mdat = mdat.reset_index(drop=True)
+mdat.to_feather('data/full_gfw_10d_effort_model_data_8DAY_2012-01-01_2016-12-26.feather')
+
+
+
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# Do Not Use
+# Archive code
+# Pool processing
+# gb = gfw.groupby('date')
+# days = [gb.get_group(x) for x in gb.groups]
+
+# days = days[0:3]
+
+# # Debug
+# days = days[0].reset_index(drop=True)
+#days = days.loc[1:5, :]
+# dat = days
+# process_days(days)
+
+#dat = days[141]
+
+#process_days(dat)
+
+#test2 = sst[sst.date == '2012-01-01']
+
+#test2.head()
+
+
+# pool = multiprocessing.Pool(50)
+# pool.map(process_days, days)
+# pool.close()
+
+
+#------------------------------------------------------------------
+# Calculate distance to shore
+
+
+
+
 # Get Google API key
 #api_key = open('Google_api_key.txt', 'r')
 #gkey = api_key.read()
@@ -631,65 +686,9 @@ def distance_to_eez(lon, lat):
 # from pandarallel import pandarallel
 # pandarallel.initialize(progress_bar=True)
 
-dat = pd.read_feather('data/full_gfw_10d_effort_model_data_8DAY_2012-01-01_2016-12-26.feather')
+#dat = pd.read_feather('data/full_gfw_10d_effort_model_data_8DAY_2012-01-01_2016-12-26.feather')
 #dat = dat.loc[0:5, :]
 
 #tqdm.pandas()
 
-# Get depth in meters
-#dat['depth_m'] = dat.progress_apply(lambda x: get_depth(x['lon1'], x['lat1']), axis=1)
-#dat.head()
-
-#dat.to_feather('data/full_gfw_10d_effort_model_data_8DAY_2012-01-01_2016-12-26.feather')
-
-# print("Calc distance to coastline")
-
-#dat = dat.iloc[1:100, :]
-
-# Distance to coastline
-coastline = get_coastline('ARG')
-
-# Get to Dask Dataframe
-dask_df = dd.from_pandas(dat, npartitions=20)
-
-
-# Get Distance to coast (km)
-dask_df['coast_dist_km'] = dask_df.apply((lambda x: coast_dist(x['lon1'], x['lat1'])), axis=1, meta=('f8')).compute(scheduler='processes')
-
-
-print("Calc closest port")
-# Distance to closests port
-ports = get_ports()
-
-# Standard pandas apply
-# dat['port'], dat['port_dist_km'] = zip(*dat.apply((lambda x: port_dist(x['lon1'], x['lat1'])), axis=1))
-
-port_name, port_dist = zip(*dask_df.apply((lambda x: port_dist(x['lon1'], x['lat1'])), axis=1, meta=('str', 'f8')).compute(scheduler='processes'))
-
-dask_df['port'] = pd.Series(port_name)
-dask_df['port_dist_km'] = pd.Series(port_dist)
-
-
-
-
-print("Calc distance to closest eez")
-
-# Calculate distance to closest eez   
-shpfile1 = gpd.read_file("data/EEZ/eez_v10.shp")
-arg = shpfile1[shpfile1.Territory1 == 'Argentina'].reset_index(drop=True)  #268
-poly = arg.geometry[0]
-pol_ext = LinearRing(poly.exterior.coords)
-
-# Calc distance to eez
-dask_df['distance_to_eez_km'] = dask_df.apply((lambda x: distance_to_eez(x['lon1'], x['lat1'])), axis=1, meta=('f8')).compute(scheduler='processes')
-
-
-
-dat = dask_df.compute()
-dat = dat.reset_index(drop=True)
-dat.to_feather('data/full_gfw_10d_effort_model_data_8DAY_2012-01-01_2016-12-26.feather')
-
-
-#mdat = pd.read_feather('data/full_gfw_10d_effort_model_data_8DAY_2012-01-01_2016-12-26.feather')
-#mdat.to_feather('data/test.feather')
 
