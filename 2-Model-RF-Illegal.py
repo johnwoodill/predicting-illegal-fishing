@@ -16,20 +16,11 @@ from sklearn.model_selection import RandomizedSearchCV, TimeSeriesSplit, GridSea
 from collections import deque
 import calendar
 
-#Fully processed data
-# dat.to_feather('data/full_gfw_10d_illegal_model_data_DAILY_2012-01-01_2016-12-31.feather')
+# Daily data
+#dat = pd.read_feather('data/full_gfw_10d_illegal_model_data_DAILY_2012-01-01_2016-12-31.feather')
 
 # 8Day data
 dat = pd.read_feather('data/full_gfw_10d_effort_model_data_8DAY_2012-01-01_2016-12-26.feather')
-
-# DAILY data
-#dat = pd.read_feather('~/Projects/predicting-illegal-fishing/data/full_gfw_10d_illegal_model_data_DAILY_2012-01-01_2016-12-31.feather')
-
-# Subset drifting longlines
-#dat = dat[dat.geartype == 'drifting_longlines']
-
-# Keep only vessel with fishing hours
-#dat = dat[dat['fishing_hours'] > 0 ]
 
 # Keep only Chinese vessels
 dat = dat[(dat['flag'] == 'CHN') | (dat['flag'] == 'ARG')]
@@ -51,7 +42,7 @@ dat.loc[:, 'month_abbr'] = dat.apply(lambda x: calendar.month_abbr[x['month']], 
 
 # Linear model
 # Get data frame of variables and dummy seascapes
-moddat = dat[['illegal', 'year', 'fishing_hours', 'month_abbr', 'seascape_class', 'sst', 'sst_grad', 'chlor_a', 'lon1', 'lat1', 'depth_m', 'coast_dist_km', 'port_dist_km', 'eez', 'distance_to_eez_km']].dropna().reset_index(drop=True)
+# moddat = dat[['illegal', 'year', 'fishing_hours', 'month_abbr', 'seascape_class', 'sst', 'sst_grad', 'chlor_a', 'lon1', 'lat1', 'depth_m', 'coast_dist_km', 'port_dist_km', 'eez', 'distance_to_eez_km']].dropna().reset_index(drop=True)
 
 moddat = dat[['illegal', 'year', 'fishing_hours', 'month_abbr', 'seascape_class', 'sst', 'chlor_a', 'lon1', 'lat1', 'coast_dist_km', 'port_dist_km', 'eez', 'distance_to_eez_km']].dropna().reset_index(drop=True)
 
@@ -102,7 +93,13 @@ for year in range(2012, 2017):
     y_test = y_test['illegal']
     
     #clf = LogisticRegression().fit(X_train, y_train)
-    clf = RandomForestClassifier(n_estimators=100).fit(X_train, y_train)
+    
+    # Parameter tuning
+    # n_estimators: 1600, min_samples_split: 2, min_samples_leaf:2, max_depth:40, bootstrap:True
+    clf = RandomForestClassifier(n_estimators=1600, 
+                                 min_samples_split=2,
+                                 max_depth=40,
+                                 bootstrap=True).fit(X_train, y_train)
 
     # Get predicted probabilities for sensitivity analysis
     pred_proba = clf.predict_proba(X_test)

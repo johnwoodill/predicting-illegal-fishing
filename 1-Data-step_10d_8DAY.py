@@ -104,7 +104,7 @@ LAT2 = -39
 # # ----------------------------------------------------------------------
 # # Parse: GFW Effort Data -----------------------------------------------
 # # Get global fish watch data
-GFW_DIR = '/data2/GFW_public/fishing_effort_10d/daily_csvs'
+# GFW_DIR = '/data2/GFW_public/fishing_effort_10d/daily_csvs'
 
 # # Load fishing vessel list
 # vessels = pd.read_csv('/data2/GFW_public/fishing_vessels/fishing_vessels.csv')
@@ -437,10 +437,10 @@ def find_chlor(date, lat, lon):
 
 
 def coast_dist(lon, lat):
-    lat1 = lat - 10
-    lat2 = lat + 10
-    lon1 = lon - 10
-    lon2 = lon + 10
+    lat1 = lat - 20
+    lat2 = lat + 20
+    lon1 = lon - 20
+    lon2 = lon + 20
     indat = coastline[(coastline['lat'].values >= lat1) & (coastline['lat'].values <= lat2) & (coastline['lon'].values >= lon1) & (coastline['lon'].values <= lon2)] 
     distances = indat.apply(lambda row: haversine(lon, lat, row['lon'], row['lat']), axis=1)
     return (distances[distances.idxmin()])
@@ -542,12 +542,18 @@ def distance_to_eez(lon, lat):
 # Main function to process data
 def process_days(dat):    
     
+    check = 0
+    
     # Date to save file as
     date = dat['date'].iat[0]
-        
-    # ------------------------------------
-    #print("1-Processing Seascapes")
-    dat['seascape_class'], dat['seascape_prob'] = zip(*dat.apply(lambda row: find_seascape(row['date'], row['lat1'], row['lon1']), axis=1))
+    
+    try:        
+        # ------------------------------------
+        #print("1-Processing Seascapes")
+        dat['seascape_class'], dat['seascape_prob'] = zip(*dat.apply(lambda row: find_seascape(row['date'], row['lat1'], row['lon1']), axis=1))
+        check += 1        
+    except:
+        print(f"Failed: Seascape - {date}")    
         
     # ------------------------------------
     #print("2-Processing SST and SST Gradient")
@@ -556,41 +562,70 @@ def process_days(dat):
     # dat['sst'] = sst
     # dat['sst_grad'] = sst_grad
     
-    # print("2-Processing SST w/o Gradient")
-    dat['sst'] = dat.apply(lambda row: find_sst(row['date'], row['lat1'], row['lon1']), axis=1)
+    try:
+        # print("2-Processing SST w/o Gradient")
+        dat['sst'] = dat.apply(lambda row: find_sst(row['date'], row['lat1'], row['lon1']), axis=1)
+        check += 1
+    except:
+        print(f"Failed: SST - {date}")      
         
-    # ------------------------------------
-    #print("3-Processing CHL")
-    dat['chlor_a'] = dat.apply(lambda row: find_chlor(row['date'], row['lat1'], row['lon1']), axis=1)
-    
-    # ------------------------------------
-    # print("4-Processing distance to coast")
-    dat['coast_dist_km'] = dat.apply((lambda x: coast_dist(x['lon1'], x['lat1'])), axis=1)
+             
+    try:    
+        # ------------------------------------
+        #print("3-Processing CHL")
+        dat['chlor_a'] = dat.apply(lambda row: find_chlor(row['date'], row['lat1'], row['lon1']), axis=1)
+        check += 1
+    except:
+        print(f"Failed: CHL {date}")
 
-    # ------------------------------------
-    # print("5-Processing port name and distance")
-    dat['port'], dat['port_dist_km'] = zip(*dat.apply((lambda x: port_dist(x['lon1'], x['lat1'])), axis=1))
-   
-    # ------------------------------------
-    # print("6-Processing distance to EEZ line")
-    dat['distance_to_eez_km'] = dat.apply((lambda x: distance_to_eez(x['lon1'], x['lat1'])), axis=1)
+    try:
+        # ------------------------------------
+        # print("4-Processing distance to coast")
+        dat['coast_dist_km'] = dat.apply((lambda x: coast_dist(x['lon1'], x['lat1'])), axis=1)
+        check += 1
+    except:
+        print(f"Failed: Coast Dist KM {date}")
+        
     
+    try:
+        # ------------------------------------
+        # print("5-Processing port name and distance")
+        dat['port'], dat['port_dist_km'] = zip(*dat.apply((lambda x: port_dist(x['lon1'], x['lat1'])), axis=1))
+        check += 1
+    except:
+        print(f"Failed: Port Dist KM {date}")
+        
+        
+    try:
+        # ------------------------------------
+        # print("6-Processing distance to EEZ line")
+        dat['distance_to_eez_km'] = dat.apply((lambda x: distance_to_eez(x['lon1'], x['lat1'])), axis=1)
+        check += 1
+    except:
+        print(f"Failed: Distance to EEZ {date}")
+
     # ------------------------------------
     # print("7-Processing depth")
     # dat['depth_m'] = dat.progress_apply(lambda x: get_depth(x['lon1'], x['lat1']), axis=1)
     
-    # ------------------------------------
-    # print("8-Assigning EEZ True or False")
-    dat['eez'] = dat.apply((lambda x: eez_check(x['lon1'], x['lat1'])), axis=1)
+    try:
+        # ------------------------------------
+        # print("8-Assigning EEZ True or False")
+        dat['eez'] = dat.apply((lambda x: eez_check(x['lon1'], x['lat1'])), axis=1)
+        check += 1
+    except:
+        print(f"Failed: EEZ Check {date}")
         
-    # ------------------------------------
-    print(f"4-Save data to data/processed/10d/8DAY/processed_{date}.feather")
-    
-    # Save data
-    #print(dat.columns)
-    outdat = dat.reset_index(drop=True)
-    outdat.to_feather(f"data/processed/10d/8DAY/processed_{date}.feather")
-    
+    if check == 7:
+        # ------------------------------------
+        print(f"4-Save data to data/processed/10d/8DAY/processed_{date}.feather")
+        
+        # Save data
+        #print(dat.columns)
+        outdat = dat.reset_index(drop=True)
+        outdat.to_feather(f"data/processed/10d/8DAY/processed_{date}.feather")
+    else:
+        print(f"Failed: {date}")
     #return 1
 
 
@@ -615,23 +650,23 @@ ports = get_ports()
 # Dask parallel processing
 
 # Debugging
-# gfw = gfw[gfw.date == '2013-03-14']
+# gfw = gfw[gfw.date == '2014-03-22']
 # dat = gfw
-# dat
+# # dat
 # process_days(dat)
 
-# dask_gfw = dd.from_pandas(gfw, npartitions=50)
-# dask_gfw.groupby(['date'], group_keys=True).apply((lambda x: process_days(x)), axis=1, meta=('int')).compute(scheduler='processes')
+#dask_gfw = dd.from_pandas(gfw, npartitions=50)
+#a = dask_gfw.groupby(['date'], group_keys=True).apply((lambda x: process_days(x)), axis=1, meta=('int')).compute(scheduler='processes', num_workers=50)
 
 
 # ------------------------------------
 # Standard Parallel processing
-gb = gfw.groupby('date')
-days = [gb.get_group(x) for x in gb.groups]
+# gb = gfw.groupby('date')
+# days = [gb.get_group(x) for x in gb.groups]
 
-pool = multiprocessing.Pool(50)
-pool.map(process_days, days)
-pool.close()
+# pool = multiprocessing.Pool(50)
+# pool.map(process_days, days)
+# pool.close()
 
 
 #--------------------------------------
@@ -640,7 +675,7 @@ pool.close()
 
 # # For loop
 # for date_ in range(len(dates)):
-#     print(dates[date_])
+#     # print(dates[date_])
 #     try:
 #         proc_dat = gfw[gfw['date'] == dates[date_]]
 #         process_days(proc_dat)

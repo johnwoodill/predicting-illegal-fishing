@@ -8,7 +8,7 @@ library(stringr)
 # Full data
 # dat <- read_feather('~/Projects/predicting-illegal-fishing/data/full_gfw_10d_effort_model_data_8DAY_2012-01-01_2016-12-26.feather')
 
-dat <- read_feather('~/Projects/Seascape-and-fishing-effort/data/full_gfw_10d_effort_model_data_8DAY_2012-01-01_2016-12-26.feather')
+dat <- read_feather('~/Projects/predicting-illegal-fishing/data/full_gfw_10d_effort_model_data_8DAY_2012-01-01_2016-12-26.feather')
 
 # Model results
 mdat <- read_feather('~/Projects/predicting-illegal-fishing/data/illegal_cross_val_dat.feather')
@@ -25,24 +25,11 @@ cbp1 <- c("#999999", "#E69F00", "#56B4E9", "#009E73",
 
 
 
-
-ddat <- dat %>% group_by(date) %>% summarise(sillegal = sum(illegal)) %>% ungroup()
-
-max(ddat$sillegal)
-# 2016-02-26
-
-ddat1 <- filter(dat, date == "2016-02-26")
-ddat2 <- filter(dat, )
-
-
-ddat
-
 # ------------------------------------------------------------------------------------
 # Figure ***
 dat$year <- year(dat$date)
-month <- month(dat$date)
+dat$month <- month(dat$date)
 dat$year_month <- paste0(dat$month, "-", dat$year)
-#dat <- filter(dat, fishing_hours > 0)
 dat <- filter(dat, flag %in% c("ARG", "CHN"))
 dat$illegal <- ifelse(dat$eez == TRUE, ifelse(dat$flag != "ARG", ifelse(dat$fishing_hours > 0, 1, 0), 0), 0)
 
@@ -82,36 +69,41 @@ ggsave("~/Projects/predicting-illegal-fishing/figures/sum_illegal_activity.pdf",
 # ------------------------------------------------------------------------------------
 # Figure *** Feature Importance
 fea <- filter(fea, importance > 0)
+fea$variable
+
 fea$variable <- c("Distance to EEZ",
                   "EEZ",
                   "Distance to Coast",
                   "Longitude",
-                  "Distance to Port",
                   "Latitude",
+                  "Distance to Port",
                   "Sea Surface Temp.",
                   "Chlorophyll",
-                  "Ocean Depth",
-                  "Sea Surface Gradient",
-                  "August",
-                  "September",
-                  "Seascape 14",
-                  "Seascape 7",
+                  "Fishing Hours",
+                  # "Ocean Depth",
+                  # "Sea Surface Gradient",
                   "February",
-                  "December",
-                  "May",
+                  "Seascape 14",
+                  "Seascape 12",
                   "March",
-                  "June",
-                  "July",
-                  "January",
+                  "September",
+                  "Seascape 7",
                   "April",
+                  "May",
+                  "January",
+                  "December",
+                  "August",
+                  "July",
                   "November",
-                  "October",
+                  "October", 
+                  "June",
                   "Seascape 21",
-                  "Seascape 15",
                   "Seascape 27",
                   "Seascape 17",
-                  "Seascape 3",
-                  "Seascape 12")
+                  "Seascape 19",
+                  "Seascape 15",
+                  "Seascape 25",
+                  "Seascape 2")
 
 ggplot(fea, aes(reorder(variable, importance), importance)) + 
   geom_bar(stat='identity') +
@@ -186,6 +178,163 @@ ggplot(fe, aes(x=year, y=value, fill=factor(label))) +
   NULL
 
 ggsave("~/Projects/predicting-illegal-fishing/figures/explained_fishing_effort.pdf", width=6, height=4)
+
+
+
+# ---------------------------------------------------------
+# Not illegal to illegal seascape 
+
+dat <- read_feather('~/Projects/predicting-illegal-fishing/data/full_gfw_10d_effort_model_data_8DAY_2012-01-01_2016-12-26.feather')
+
+seascape_labels <- data.frame(seascape_class = (seq(1, 33)),
+                              nominal =(c("NORTH ATLANTIC SPRING, ACC TRANSITION",
+                                          "SUBPOLAR TRANSITION",
+                                          "TROPICAL SUBTROPICAL TRANSITION",
+                                          "WESTERN WARM POOL SUBTROPICAL",
+                                          "SUBTROPICAL GYRE TRANSITION",
+                                          "ACC, NUTRIENT STRESS",
+                                          "TEMPERATE TRANSITION",
+                                          "INDOPACIFIC SUBTROPICAL GYRE",
+                                          "EQUATORIAL TRANSITION",
+                                          "HIGHLY OLIGOTROPHIC SUBTROPICAL GYRE",
+                                          "TROPICAL/SUBTROPICAL UPWELLING",
+                                          "SUBPOLAR",
+                                          "SUBTROPICAL GYRE MESOSCALE INFLUENCED",
+                                          "TEMPERATE BLOOMS UPWELLING",
+                                          "TROPICAL SEAS",
+                                          "MEDITTERANEAN RED SEA",
+                                          "SUBTROPICAL TRANSITION \n LOW NUTRIENT STRESS",
+                                          "MEDITTERANEAN RED SEA",
+                                          "ARTIC/ SUBPOLAR SHELVES",
+                                          "SUBTROPICAL, FRESH INFLUENCED COASTAL",
+                                          "WARM, BLOOMS, HIGH NUTS",
+                                          "ARCTIC LATE SUMMER",
+                                          "FRESHWATER INFLUENCED POLAR SHELVES",
+                                          "ANTARCTIC SHELVES",
+                                          "CE PACK",
+                                          "ANTARCTIC ICE EDGE",
+                                          "HYPERSALINE EUTROPHIC, \n PERSIAN GULF, RED SEA",
+                                          "ARCTIC ICE EDGE","ANTARCTIC",
+                                          "ICE EDGE  BLOOM",
+                                          "1-30% ICE PRESENT",
+                                          "30-80% MARGINAL ICE","PACK ICE")))
+
+dat$year <- year(dat$date)
+dat$month <- month(dat$date)
+dat$year_month <- paste0(dat$month, "-", dat$year)
+dat <- filter(dat, flag %in% c("ARG", "CHN"))
+dat$illegal <- ifelse(dat$eez == TRUE, ifelse(dat$flag != "ARG", ifelse(dat$fishing_hours > 0, 1, 0), 0), 0)
+
+dat <- left_join(dat, seascape_labels, by='seascape_class')
+
+dat2 <- dat %>% 
+  group_by(mmsi) %>% 
+  arrange(date) %>% 
+  mutate(seascape_lag = lag(nominal),
+         seascape_lead = lead(nominal),
+         illegal_lag = lag(illegal),
+         illegal_lead= lead(illegal))
+
+dat2$sea_change <- ifelse(dat2$nominal == dat2$seascape_lag, 0, 1)
+dat2$ill_change <- ifelse(dat2$illegal == 1, ifelse(dat2$illegal_lag == 0, 1, 0), 0)
+
+dat3 <- filter(dat2, sea_change == 1 & ill_change == 1)
+dat3
+
+dat4 <- select(dat3, date, mmsi, sea_change, ill_change, seascape_class, seascape_lag, seascape_lead, nominal)
+dat4 <- drop_na(dat4)
+
+ggplot(dat4, aes(reorder(seascape_lag, seascape_lag, function(x) length(x)))) + 
+  labs(x=NULL, y="Number of Illegal Vessels") +
+  theme_tufte(12) +
+  geom_bar() + 
+  coord_flip() +
+  theme(panel.border = element_rect(colour = "grey", fill=NA, size=1)) +
+  geom_text(stat='count', aes(label=..count..), hjust=-.15)
+
+ggsave("~/Projects/predicting-illegal-fishing/figures/illegal_seascapes_change.pdf", width=8, heigh=4)
+
+
+
+
+
+# --------------------------------------------------------------------------------------------
+# Mapping figures
+
+dat <- read_feather('~/Projects/Seascape-and-fishing-effort/data/full_gfw_10d_effort_model_data_8DAY_2012-01-01_2016-12-26.feather')
+dat$year <- year(dat$date)
+dat$month <- month(dat$date)
+dat$year_month <- paste0(dat$month, "-", dat$year)
+dat <- filter(dat, flag %in% c("ARG", "CHN"))
+dat$illegal <- ifelse(dat$eez == TRUE, ifelse(dat$flag != "ARG", ifelse(dat$fishing_hours > 0, 1, 0), 0), 0)
+
+
+
+dat2 <- filter(dat, illegal == TRUE)
+dat2$year_month
+
+dat3 <- dat2 %>% 
+  group_by(year_month) %>% 
+  summarise(sum_fh = sum(fishing_hours))
+
+arrange(dat3, -sum_fh)
+arrange(dat3, sum_fh)
+
+ggplot(dat3, aes(x=year_month, y=sum_fh)) + geom_bar(stat='identity')
+
+
+
+
+# Check EEZ Map
+
+eez <- read_csv("~/Projects/Anomalous-IUU-Events-Argentina/data/Argentina_EEZ.csv")
+eez <- filter(eez, lon >= -68 & lon <= -51 & lat >= -51 & lat <= -39)
+eez <- filter(eez, order <= 25190)
+
+bat <- getNOAA.bathy(-68, -51, -51, -39, res = 1, keep = TRUE)
+
+
+dat <- read_feather('~/Projects/Seascape-and-fishing-effort/data/full_gfw_10d_effort_model_data_8DAY_2012-01-01_2016-12-26.feather')
+
+
+
+
+
+
+autoplot.bathy(bat, geom = c("contour", "raster"), coast=TRUE) +
+  geom_raster(aes(fill=z)) +
+  geom_contour(aes(z = z), color = "white", alpha = 0.01) +
+  
+  scale_fill_gradientn(values = scales::rescale(c(-6600, 0, 39, 1500)),
+                       colors = c("lightsteelblue4", "lightsteelblue2", "#C6E0FC", "grey50", "grey80")) +
+  
+  geom_point(data = dat2, aes(x=lon1, y=lat1, color=distance_to_eez_km)) +
+  geom_path(data = eez[order(eez$order), ], aes(x=lon, y=lat), linetype = "dashed", alpha = 0.5) +
+  # annotate("text", x=-54.5, y = -39.25, label=date_, size = 4, color='black', fontface=2) +
+  # theme(axis.title.x=element_blank(),
+  #       axis.text.x=element_blank(),
+  #       axis.ticks.x=element_blank(),
+  #       axis.title.y=element_blank(),
+  #       axis.text.y=element_blank(),
+  #       axis.ticks.y=element_blank(),
+  #       legend.direction = 'vertical',
+  #       legend.justification = 'center',
+  #       legend.position = "none",
+  #       legend.margin=margin(l = 0, unit='cm'),
+#       legend.text = element_text(size=10),
+#       legend.title = element_text(size=12),
+#       panel.grid = element_blank()) +
+
+# Legend up top
+annotate("segment", x=-Inf, xend=Inf, y=-Inf, yend=-Inf, color = "black", size=1) + #Bottom
+  annotate("segment", x=-Inf, xend=-Inf, y=-Inf, yend=Inf, color = "black", size=1) + # Left
+  annotate("segment", x=Inf, xend=Inf, y=-Inf, yend=Inf, color = "black", size=1) + # Right
+  annotate("segment", x=-Inf, xend=Inf, y=Inf, yend=Inf, color = "black", size=1) + # Top
+  # scale_color_manual(values = c("0" = "#440154FF", "1" = "#31688EFF", "2" = "#35B779FF", "3" = "#FDE725FF")) +
+  NULL
+
+
+
 
 
 
