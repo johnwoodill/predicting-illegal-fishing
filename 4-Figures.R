@@ -24,6 +24,11 @@ cbp1 <- c("#999999", "#E69F00", "#56B4E9", "#009E73",
           "#0072B2", "#D55E00", "#CC79A7")
 
 
+dat$lat_lon <- paste0(dat$lat1, "_", dat$lon1)
+
+dat2 <- dat %>% group_by(date, lat_lon) %>% 
+  summarise(fh = sum(fishing_hours))
+nrow(dat)
 
 # ------------------------------------------------------------------------------------
 # Figure ***
