@@ -9,8 +9,8 @@ from statsmodels.discrete.discrete_model import Logit
 from sklearn.linear_model import LogisticRegression, LogisticRegressionCV
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import cross_validate
-from sklearn.metrics import average_precision_score, accuracy_score, roc_curve, auc, precision_recall_curve, f1_score
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import mean_squared_error, average_precision_score, accuracy_score, roc_curve, auc, precision_recall_curve, f1_score
+from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 import sklearn.metrics as metrics
 from sklearn.model_selection import RandomizedSearchCV, TimeSeriesSplit, GridSearchCV
 from collections import deque
@@ -28,7 +28,7 @@ dat = dat[(dat['flag'] == 'CHN') | (dat['flag'] == 'ARG')]
 # If illegally operating inside EEZ (!= ARG)
 dat.loc[:, 'illegal'] = np.where(((dat['eez'] == True) & (dat['fishing_hours'] > 0) & (dat['flag'] != 'ARG') ), 1, 0)
 
-dat.loc['illegal_fishing_effort'] = np.where(dat['illegal'] == TRUE, dat['fishing_hours'], 0)
+dat['illegal_fishing_effort'] = np.where((dat['illegal'] == True), dat['fishing_hours'], 0)
 
 # Convert true/false eez to 0/1
 dat.loc[:, 'illegal'] = dat.illegal.astype('uint8')
@@ -46,7 +46,7 @@ dat.loc[:, 'month_abbr'] = dat.apply(lambda x: calendar.month_abbr[x['month']], 
 # Get data frame of variables and dummy seascapes
 # moddat = dat[['illegal', 'year', 'fishing_hours', 'month_abbr', 'seascape_class', 'sst', 'sst_grad', 'chlor_a', 'lon1', 'lat1', 'depth_m', 'coast_dist_km', 'port_dist_km', 'eez', 'distance_to_eez_km']].dropna().reset_index(drop=True)
 
-moddat = dat[['illegal', 'year', 'month_abbr', 'seascape_class', 'sst', 'chlor_a', 'lon1', 'lat1', 'coast_dist_km', 'port_dist_km', 'eez', 'distance_to_eez_km']].dropna().reset_index(drop=True)
+moddat = dat[['illegal_fishing_effort', 'year', 'month_abbr', 'seascape_class', 'sst', 'chlor_a', 'lon1', 'lat1', 'coast_dist_km', 'port_dist_km', 'eez', 'distance_to_eez_km']].dropna().reset_index(drop=True)
 
 # Dummy variables for seascape and dummies
 seascape_dummies = pd.get_dummies(moddat['seascape_class'], prefix='seascape').reset_index(drop=True)
@@ -56,10 +56,10 @@ month_dummies = pd.get_dummies(moddat['month_abbr']).reset_index(drop=True)
 moddat = pd.concat([moddat, seascape_dummies, month_dummies], axis=1)
 
 # Get X, y
-y = moddat[['year', 'illegal']].reset_index(drop=True)
+y = moddat[['year', 'illegal_fishing_effort']].reset_index(drop=True)
 
 # Drop dummy variables and prediction
-moddat = moddat.drop(columns = ['month_abbr', 'illegal', 'seascape_class'])
+moddat = moddat.drop(columns = ['month_abbr', 'illegal_fishing_effort', 'seascape_class'])
 
 # Build data for model
 X = moddat
@@ -68,11 +68,8 @@ X.head()
 y.head()
 
 # Cross-validate model
-roc_dat = pd.DataFrame()
-tpr_fpr = pd.DataFrame()
-feffort = pd.DataFrame()
 sdat = pd.DataFrame()
-for year in range(2012, 2017):
+for year in range(2013, 2017):
     
     # Get training data
     X_train = X[X.year != year]
@@ -84,72 +81,41 @@ for year in range(2012, 2017):
 
     print(f"Training Years: {X_train.year.unique()} - Test Year: {X_test.year.unique()}")
 
-    fishing_hours = X_test['fishing_hours']
-
     # Drop year
     X_train = X_train.drop(columns = ['year'])
     X_test = X_test.drop(columns = ['year'])
 
     # Set binary variable
-    y_train = y_train['illegal']
-    y_test = y_test['illegal']
+    y_train = y_train['illegal_fishing_effort']
+    y_test = y_test['illegal_fishing_effort']
     
-    #clf = LogisticRegression().fit(X_train, y_train)
+
+    # Random Forest Regression
+    clf = RandomForestRegressor(n_estimators = 100).fit(X_train, y_train)
+    test_r2 = clf.score(X_test, y_test)
+    train_r2 = clf.score(X_train, y_train)
+       
     
-    # Parameter tuning
-    # n_estimators: 1600, min_samples_split: 2, min_samples_leaf:2, max_depth:40, bootstrap:True
-    clf = RandomForestClassifier(n_estimators=1600, 
-                                 min_samples_split=2,
-                                 max_depth=40,
-                                 bootstrap=True).fit(X_train, y_train)
-
-    # Get predicted probabilities for sensitivity analysis
-    pred_proba = clf.predict_proba(X_test)
-    proba = pred_proba[:, 1]
-
+    
     # Get predictions and fishing hours
-    y_pred = clf.predict(X_test)
-
-    # data frame of true, pred, and fishing hours
-    pred_dat = pd.DataFrame({'y_true': y_test, 'y_pred': y_pred, 'fishing_hours': fishing_hours})
+    y_train_pred = clf.predict(X_train)
+    y_train_true = y_train
     
-    tf_dat = pred_dat[pred_dat['y_true'] == 1]
-    tf = sum(tf_dat['fishing_hours'])
+    y_test_pred = clf.predict(X_test)
+    y_test_true = y_test
 
-    # True positive
-    fh_tpr_dat = pred_dat[(pred_dat['y_true'] == 1) & (pred_dat['y_pred'] == 1)]
-
-    # False positive
-    fh_fpr_dat = pred_dat[((pred_dat['y_true'] == 0) & (pred_dat['y_pred'] != 0)) | ((pred_dat['y_true'] == 1) & (pred_dat['y_pred'] != 1))]
+    train_mse = mean_squared_error(y_train_true, y_train_pred)
+    test_mse = mean_squared_error(y_test_true, y_test_pred)
     
-    tpr_fishing_hours = sum(fh_tpr_dat['fishing_hours'])
-    fpr_fishing_hours = sum(fh_fpr_dat['fishing_hours'])
-    total_fishing_hours = sum(pred_dat['fishing_hours'])
-
-    feffort_indat = pd.DataFrame({'year': [year], 'total_fishing': [tf], 'tpr_fishing': [tpr_fishing_hours], 'fpr_fishing_hours': [fpr_fishing_hours]})
-    feffort = pd.concat([feffort, feffort_indat])
+    outdat = pd.DataFrame({'year': [year], 
+                           'Train MSE': round(train_mse, 4),
+                           'Test MSE': round(test_mse, 4),
+                           'Train Coefficient of Det.': [test_r2],
+                           'Test Coefficient of Det.': [train_r2]})
+    sdat = pd.concat([sdat, outdat])
+    print(f"Train MSE: {round(train_mse, 4)} ------ Test MSE: {round(test_mse, 4)}")
     
-    # Precision-recall across thresholds
-    # Precision = tp / ( tp + fp )
-    # Recall = tn / ( tn + fp )
-    precision, recall, thresholds = precision_recall_curve(y_test, proba )
-
-    # Test predictions
-    y_pred = clf.predict(X_test)
-
-    # F1 score = 2 * precision * recall / precision + recall
-    f1 = f1_score(y_test, y_pred)
-
-    # calculate precision-recall AUC
-    auc_m = auc(recall, precision)
-
-    # calculate average precision score
-    ap = average_precision_score(y_test, proba)
-    print('f1=%.3f auc=%.3f ap=%.3f' % (f1, auc_m, ap))
-
-    ddat = pd.DataFrame({'year': year, 'prec': precision, 'recall': recall, 'f1': f1, 'auc':auc_m, 'ap':ap})
-
-    sdat = pd.concat([sdat, ddat])
+print(sdat)
 
 # Save fishing hours data
 feffort = feffort.reset_index(drop=True)
