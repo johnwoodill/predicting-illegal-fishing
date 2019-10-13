@@ -23,7 +23,7 @@ import calendar
 dat = pd.read_feather('data/full_gfw_10d_effort_model_data_8DAY_2012-01-01_2016-12-26.feather')
 
 # Keep only Chinese vessels
-dat = dat[(dat['flag'] == 'CHN') | (dat['flag'] == 'ARG')]
+#dat = dat[(dat['flag'] == 'CHN') | (dat['flag'] == 'ARG')]
 
 # If illegally operating inside EEZ (!= ARG)
 dat.loc[:, 'illegal'] = np.where(((dat['eez'] == True) & (dat['fishing_hours'] > 0) & (dat['flag'] != 'ARG') ), 1, 0)
@@ -46,7 +46,11 @@ dat.loc[:, 'month_abbr'] = dat.apply(lambda x: calendar.month_abbr[x['month']], 
 # Get data frame of variables and dummy seascapes
 # moddat = dat[['illegal', 'year', 'fishing_hours', 'month_abbr', 'seascape_class', 'sst', 'sst_grad', 'chlor_a', 'lon1', 'lat1', 'depth_m', 'coast_dist_km', 'port_dist_km', 'eez', 'distance_to_eez_km']].dropna().reset_index(drop=True)
 
-moddat = dat[['illegal_fishing_effort', 'year', 'month_abbr', 'seascape_class', 'sst', 'chlor_a', 'lon1', 'lat1', 'coast_dist_km', 'port_dist_km', 'eez', 'distance_to_eez_km']].dropna().reset_index(drop=True)
+moddat = dat[['illegal_fishing_effort', 'year', 'month_abbr', 'seascape_class', 'sst', 
+              'chlor_a', 'lon1', 'lat1', 'coast_dist_km', 'port_dist_km', 'eez', 
+              'distance_to_eez_km']].dropna().reset_index(drop=True)
+
+moddat = dat[['illegal_fishing_effort', 'year', 'month_abbr', 'seascape_class', 'sst']].dropna().reset_index(drop=True)
 
 # Dummy variables for seascape and dummies
 seascape_dummies = pd.get_dummies(moddat['seascape_class'], prefix='seascape').reset_index(drop=True)
@@ -108,8 +112,8 @@ for year in range(2013, 2017):
     test_mse = mean_squared_error(y_test_true, y_test_pred)
     
     outdat = pd.DataFrame({'year': [year], 
-                           'Train MSE': round(train_mse, 4),
-                           'Test MSE': round(test_mse, 4),
+                           'Train_MSE': round(train_mse, 4),
+                           'Test_MSE': round(test_mse, 4),
                            'Train Coefficient of Det.': [test_r2],
                            'Test Coefficient of Det.': [train_r2]})
     sdat = pd.concat([sdat, outdat])
