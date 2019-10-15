@@ -25,10 +25,15 @@ dat = dat[(dat['flag'] == 'CHN') | (dat['flag'] == 'ARG')]
 # If illegally operating inside EEZ (!= ARG)
 dat.loc[:, 'illegal'] = np.where(((dat['eez'] == True) & (dat['fishing_hours'] > 0) & (dat['flag'] != 'ARG') ), 1, 0)
 
+# Buffer by 2km
+dat.loc[:, 'illegal_2km'] = np.where(((dat['illegal'] == True) & (dat['distance_to_eez_km'] >= 2)), 1, 0)
+
 # Convert true/false eez to 0/1
 dat.loc[:, 'illegal'] = dat.illegal.astype('uint8')
+dat.loc[:, 'illegal_2km'] = dat.illegal_2km.astype('uint8')
 
 sum(dat.illegal)/len(dat)
+sum(dat.illegal_2km)/len(dat)
 
 # Get year month
 dat.loc[:, 'year'] = pd.DatetimeIndex(dat['date']).year
@@ -91,10 +96,11 @@ for year in range(2012, 2017):
     #clf = LogisticRegression().fit(X_train, y_train)
     # Parameter tuning
     # n_estimators: 1600, min_samples_split: 2, min_samples_leaf:2, max_depth:40, bootstrap:True
-    clf = RandomForestClassifier(n_estimators=1600, 
-                                 min_samples_split=2,
-                                 max_depth=40,
-                                 bootstrap=True).fit(X_train, y_train)
+    clf = RandomForestClassifier(n_estimators = 100).fit(X_train, y_train)
+    # clf = RandomForestClassifier(n_estimators=1600, 
+    #                              min_samples_split=2,
+    #                              max_depth=40,
+    #                              bootstrap=True).fit(X_train, y_train)
     # Get predicted probabilities for sensitivity analysis
     pred_proba = clf.predict_proba(X_test)
     proba = pred_proba[:, 1]
@@ -128,6 +134,8 @@ for year in range(2012, 2017):
     print('f1=%.3f auc=%.3f ap=%.3f' % (f1, auc_m, ap))
     ddat = pd.DataFrame({'year': year, 'prec': precision, 'recall': recall, 'f1': f1, 'auc':auc_m, 'ap':ap})
     sdat = pd.concat([sdat, ddat])
+
+
 
 # Save fishing hours data
 feffort = feffort.reset_index(drop=True)

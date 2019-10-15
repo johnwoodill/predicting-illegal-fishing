@@ -1,5 +1,11 @@
 # Seascape bulk download (NC)
-https://cwcgom.aoml.noaa.gov/thredds/ncss/SEASCAPE_8DAY/SEASCAPES.nc?var=CLASS&var=P&north=-39&west=-68&east=-51&south=-48&disableProjSubset=on&horizStride=1&time_start=2012-01-01T12%3A00%3A00Z&time_end=2016-12-31T12%3A00%3A00Z&timeStride=1&addLatLon=true&accept=netcdf
+# Argentina
+https://cwcgom.aoml.noaa.gov/thredds/ncss/SEASCAPE_8DAY/SEASCAPES.nc?var=CLASS&var=P&north=-39&west=-68&east=-51&south=-51&disableProjSubset=on&horizStride=1&time_start=2012-01-01T12%3A00%3A00Z&time_end=2016-12-31T12%3A00%3A00Z&timeStride=1&addLatLon=true&accept=netcdf
+
+# Falkland Islands
+https://cwcgom.aoml.noaa.gov/thredds/ncss/SEASCAPE_8DAY/SEASCAPES.nc?var=CLASS&var=P&north=-51&west=-68&east=-51&south=-56&disableProjSubset=on&horizStride=1&time_start=2012-01-01T12%3A00%3A00Z&time_end=2016-12-31T12%3A00%3A00Z&timeStride=1&addLatLon=true&accept=netcdf
+
+
 
 # (CSV)
 https://cwcgom.aoml.noaa.gov/erddap/griddap/noaa_aoml_seascapes_8day.htmlTable?CLASS%5B(2012-01-01T12:00:00Z)%5D%5B(-47.975):(-38.975)%5D%5B(-67.975):(-50.975)%5D&.draw=surface&.vars=longitude%7Clatitude%7CCLASS&.colorBar=%7C%7C%7C%7C%7C&.bgColor=0xffccccff
@@ -8,10 +14,6 @@ https://cwcgom.aoml.noaa.gov/erddap/griddap/noaa_aoml_seascapes_8day.htmlTable?C
 # SST from Aqua (NC)
 # https://oceancolor.gsfc.nasa.gov/forum/oceancolor/topic_show.pl?pid=12520
 wget -q --post-data="sensor=aqua&sdate=2012-01-01&edate=2016-12-31&dtype=L3m&addurl=1&results_as_file=1&search=*_DAY_SST_sst_4km.nc" -O - https://oceandata.sci.gsfc.nasa.gov/api/file_search |wget -i -
-
-# SST4 from Aqua (NC)
-# https://oceancolor.gsfc.nasa.gov/forum/oceancolor/topic_show.pl?pid=12520
-wget -q --post-data="sensor=aqua&sdate=2012-01-01&edate=2016-12-31&dtype=L3m&addurl=1&results_as_file=1&search=*_DAY_SST4_sst4_4km.nc" -O - https://oceandata.sci.gsfc.nasa.gov/api/file_search |wget -i -
 
 # CHL_a from Aqua (NC)
 # https://oceancolor.gsfc.nasa.gov/forum/oceancolor/topic_show.pl?pid=12520

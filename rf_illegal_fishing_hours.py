@@ -118,7 +118,6 @@ for year in range(2013, 2017):
                            'Test Coefficient of Det.': [train_r2]})
     sdat = pd.concat([sdat, outdat])
     print(f"Train MSE: {round(train_mse, 4)} ------ Test MSE: {round(test_mse, 4)}")
-    
 print(sdat)
 
 # Save fishing hours data
