@@ -31,6 +31,23 @@ from time import sleep
 from urllib.request import Request, urlopen
 from tqdm import tqdm
 from dask.diagnostics import ProgressBar
+import calendarimport pandas as pd
+import numpy as np
+import statsmodels.api as sm
+import matplotlib.pyplot as plt
+import seaborn as sns
+import glob
+from sklearn.preprocessing import MinMaxScaler
+from statsmodels.discrete.discrete_model import Logit
+from sklearn.linear_model import LogisticRegression, LogisticRegressionCV
+from sklearn.model_selection import train_test_split
+from sklearn.model_selection import cross_validate
+from sklearn.metrics import average_precision_score, accuracy_score, roc_curve, auc, precision_recall_curve, f1_score
+from sklearn.ensemble import RandomForestClassifier
+import sklearn.metrics as metrics
+from sklearn.model_selection import RandomizedSearchCV, TimeSeriesSplit, GridSearchCV
+from collections import deque
+import calendar
 
 
 LON1 = -68
@@ -100,9 +117,6 @@ def find_seascape(date, lat, lon):
                   (indat['lat'].values <= lat2)] 
     
     distances = indat.apply(lambda row: dist(lat, lon, row['lat'], row['lon']), axis=1)
-    #rdat = pd.DataFrame({"seascape_class": [indat.loc[distances.idxmin(), 'seascape_class']], "seascape_prob": [indat.loc[distances.idxmin(), 'seascape_prob']]})
-    #print(rdat)
-    #return rdat
     return (indat.loc[distances.idxmin(), 'seascape_class'], indat.loc[distances.idxmin(), 'seascape_prob'])
 
 
@@ -177,6 +191,7 @@ sea = sea[sea['date'].isin(days)]
 # Standard Parallel processing
 gb = sst.groupby('date')
 days = [gb.get_group(x) for x in gb.groups]
+days
 
 pool = multiprocessing.Pool(6)
 pool.map(process_days, days)
@@ -205,3 +220,167 @@ for file in files:
 mdat = mdat.reset_index(drop=True)
 mdat.to_feather('data/illegal_seascape_data_model.feather')
 
+
+
+
+
+
+# -----------------------------------------------------------------
+# Random Forest Classification
+
+# 8Day data
+dat = pd.read_feather('data/full_gfw_10d_effort_model_data_8DAY_2012-01-01_2016-12-26.feather')
+
+# Keep only Chinese vessels
+dat = dat[(dat['flag'] == 'CHN') | (dat['flag'] == 'ARG')]
+
+# If illegally operating inside EEZ (!= ARG)
+dat.loc[:, 'illegal'] = np.where(((dat['eez'] == True) & (dat['fishing_hours'] > 0) & (dat['flag'] != 'ARG') ), 1, 0)
+
+# Buffer by 2km
+dat.loc[:, 'illegal_2km'] = np.where(((dat['illegal'] == True) & (dat['distance_to_eez_km'] >= 2)), 1, 0)
+
+# Convert true/false eez to 0/1
+dat.loc[:, 'illegal'] = dat.illegal.astype('uint8')
+dat.loc[:, 'illegal_2km'] = dat.illegal_2km.astype('uint8')
+
+sum(dat.illegal)/len(dat)
+sum(dat.illegal_2km)/len(dat)
+
+# Get year month
+dat.loc[:, 'year'] = pd.DatetimeIndex(dat['date']).year
+dat.loc[:, 'month'] = pd.DatetimeIndex(dat['date']).month
+
+# Convert month number to name
+dat.loc[:, 'month_abbr'] = dat.apply(lambda x: calendar.month_abbr[x['month']], 1)
+
+# moddat = dat[['month_abbr', 'seascape_class', 'sst', 'eez', 'distance_to_eez_km', 
+#               'lat1', 'lon1']].dropna().reset_index(drop=True)
+
+moddat = dat[['illegal', 'sst', 'eez', 'distance_to_eez_km', 'seascape_class', 'month_abbr',
+              'lat1', 'lon1']].dropna().reset_index(drop=True)
+
+# Dummy variables for seascape and dummies
+seascape_dummies = pd.get_dummies(moddat['seascape_class'], prefix='seascape').reset_index(drop=True)
+month_dummies = pd.get_dummies(moddat['month_abbr']).reset_index(drop=True)
+
+# Concat dummy variables
+moddat = pd.concat([moddat, seascape_dummies, month_dummies], axis=1)
+
+# Add seascapes available in model test data that is missing from moddat
+moddat['seascape_1.0'] = 0
+moddat['seascape_3.0'] = 0
+moddat['seascape_5.0'] = 0
+moddat['seascape_8.0'] = 0
+moddat['seascape_11.0'] = 0
+moddat['seascape_13.0'] = 0
+moddat['seascape_20.0'] = 0
+moddat['seascape_23.0'] = 0
+
+dat.groupby('date').count()
+
+# Get X, y
+y = moddat[['illegal']].reset_index(drop=True)
+y = y.ravel()
+
+# Drop dummy variables and prediction
+# moddat = moddat.drop(columns = ['month_abbr', 'illegal', 'seascape_class'])
+
+moddat = moddat.drop(columns = ['illegal', 'month_abbr', 'seascape_class'])
+
+# Build data for model
+X = moddat
+X.columns
+X.head()
+y.head()
+
+# Classication object
+clf = RandomForestClassifier(n_estimators = 100).fit(X, y)
+
+
+
+
+# ------------------------------------------------------------------
+# Test data set 
+il_test = pd.read_feather('data/illegal_seascape_data_model.feather')
+
+# Convert month
+il_test['month'] = pd.DatetimeIndex(il_test['date']).month
+
+# Convert month number to name
+il_test.loc[:, 'month_abbr'] = il_test.apply(lambda x: calendar.month_abbr[x['month']], 1)
+
+# Dummy variables for seascape and dummies
+il_seascape_dummies = pd.get_dummies(il_test['seascape_class'], prefix='seascape').reset_index(drop=True)
+il_month_dummies = pd.get_dummies(il_test['month_abbr']).reset_index(drop=True)
+
+# Concat dummy variables
+il_test = pd.concat([il_test, il_seascape_dummies, il_month_dummies], axis=1)
+
+# Drop variables
+il_test = il_test.drop(columns = ['month_abbr', 'month', 'seascape_class'])
+
+il_test = il_test[['date', 'lon', 'lat', 'sst', 'seascape_prob', 'distance_to_eez_km', 'eez',
+       'seascape_1.0', 'seascape_2.0', 'seascape_3.0', 'seascape_5.0',
+       'seascape_7.0', 'seascape_8.0', 'seascape_11.0', 'seascape_12.0',
+       'seascape_13.0', 'seascape_14.0', 'seascape_15.0', 'seascape_17.0',
+       'seascape_20.0', 'seascape_21.0', 'seascape_23.0', 'seascape_25.0',
+       'seascape_27.0', 'Feb', 'Jan', 'Mar']]
+
+# Rename to match model data labels
+il_test.columns = ['date', 'lon1', 'lat1', 'sst', 'seascape_prob', 'distance_to_eez_km', 'eez',
+       'seascape_1.0', 'seascape_2.0', 'seascape_3.0', 'seascape_5.0',
+       'seascape_7.0', 'seascape_8.0', 'seascape_11.0', 'seascape_12.0',
+       'seascape_13.0', 'seascape_14.0', 'seascape_15.0', 'seascape_17.0',
+       'seascape_20.0', 'seascape_21.0', 'seascape_23.0', 'seascape_25.0',
+       'seascape_27.0', 'Feb', 'Jan', 'Mar']
+
+# Create Month columns for missing data
+il_test['Apr'] = 0
+il_test['May'] = 0
+il_test['Jun'] = 0
+il_test['Jul'] = 0
+il_test['Aug'] = 0
+il_test['Sep'] = 0
+il_test['Oct'] = 0
+il_test['Nov'] = 0
+il_test['Dec'] = 0
+
+#il_test = il_test[['sst', 'eez', 'distance_to_eez_km', 'lat', 'lon']]
+
+#il_test.columns = ['sst', 'eez', 'distance_to_eez_km', 'lat1', 'lon1']
+
+# Drop NA for model
+il_test = il_test.dropna()
+
+# Get dates for output df
+datet = il_test['date'].copy()
+
+# Drop date
+il_test = il_test.drop(columns = 'date')
+
+# Test predictions
+y_pred = clf.predict(il_test)
+sum(y_pred)
+
+# Get predict probabilities
+y_proba = clf.predict_proba(il_test)
+
+pred_0 = [el[0] for el in y_proba]
+pred_1 = [el[1] for el in y_proba]
+
+il_test['pred_0'] = pred_0
+il_test['pred_1'] = pred_1
+il_test['y_pred'] = y_pred
+il_test['date'] = datet
+
+
+# Feature importance
+fea_import = pd.DataFrame({'variable': X.columns, 'importance': clf.feature_importances_})
+fea_import = fea_import.sort_values('importance', ascending=False)
+print(fea_import)
+
+
+# save data
+il_test = il_test.reset_index(drop=True)
+il_test.to_feather('data/illegal_seascape_pred.feather')
