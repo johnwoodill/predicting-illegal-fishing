@@ -76,13 +76,12 @@ p1 <- autoplot.bathy(bat, geom = c("contour", "raster"), coast=TRUE, show.legend
   annotate("segment", x=-Inf, xend=-Inf, y=-Inf, yend=Inf, color = "black", size=1) + # Left
   annotate("segment", x=Inf, xend=Inf, y=-Inf, yend=Inf, color = "black", size=1) + # Right
   annotate("segment", x=-Inf, xend=Inf, y=Inf, yend=Inf, color = "black", size=1) + # Top
-  scale_color_manual(values = c("0" = "#440154FF", "1" = "#31688EFF", "2" = "#35B779FF", "3" = "#FDE725FF")) +
+  # scale_color_manual(values = c("0" = "#440154FF", "1" = "#31688EFF", "2" = "#35B779FF", "3" = "#FDE725FF")) +
   NULL
+p1
 
-
-# Seascapes (2016-02-26)
-sdat = filter(dat, !is.na(seascape_class) & date == '2016-02-26' & (seascape_class %in% c(12, 14)))
-ildat = filter(idat, date == '2016-02-26')
+# Sea surface temperature (2016-02-26)
+sdat = filter(dat, !is.na(sst) | date == '2016-01-25')
 
 p2 <- autoplot.bathy(bat, geom = c("contour", "raster"), coast=TRUE, show.legend = FALSE) +
   geom_raster(aes(fill=z), show.legend = FALSE) +
@@ -90,14 +89,13 @@ p2 <- autoplot.bathy(bat, geom = c("contour", "raster"), coast=TRUE, show.legend
   scale_fill_gradientn(values = scales::rescale(c(-6600, 0, 39, 1500)),
                        colors = c("lightsteelblue4", "lightsteelblue2", "#C6E0FC", "grey50", "grey80")) +
   
-  geom_point(data=sdat, aes(x=lon, y=lat, color=factor(seascape_class)), size = 0.5) +
+  geom_point(data=sdat, aes(x=lon, y=lat, color=sst), size = 0.5) +
   geom_path(data = eez[order(eez$order), ], aes(x=lon, y=lat), linetype = "dashed", alpha = 0.5) +
-  geom_point(data=ildat, aes(lon1, lat1, shape=factor(illegal), color=factor(illegal))) +
-  labs(x=NULL, y=NULL, title='illegal') +
-  # guides(color = guide_colorbar(label.hjust = unit(0, 'cm'),
-  #                               frame.colour = "black",
-  #                               barwidth = .5,
-  #                               barheight = 12)) +
+  labs(x=NULL, y=NULL) +
+  guides(color = guide_colorbar(label.hjust = unit(0, 'cm'),
+                                frame.colour = "black",
+                                barwidth = .5,
+                                barheight = 12)) +
   # Legend up top
   annotate("segment", x=-Inf, xend=Inf, y=-Inf, yend=-Inf, color = "black", size=1) + #Bottom
   annotate("segment", x=-Inf, xend=-Inf, y=-Inf, yend=Inf, color = "black", size=1) + # Left
@@ -105,12 +103,12 @@ p2 <- autoplot.bathy(bat, geom = c("contour", "raster"), coast=TRUE, show.legend
   annotate("segment", x=-Inf, xend=Inf, y=Inf, yend=Inf, color = "black", size=1) + # Top
   # scale_color_manual(values = c("0" = "#440154FF", "1" = "#31688EFF", "2" = "#35B779FF", "3" = "#FDE725FF")) +
   NULL
+p2
 
-
-
-# Seascapes (2016-01-25)
-sdat = filter(dat, !is.na(seascape_class) & date == '2016-01-25' & (seascape_class %in% c(12, 14)))
-ildat = filter(idat, date == '2016-01-25')
+# Seascapes (2016-02-26)
+sdat = filter(dat, !is.na(seascape_class) & date == '2016-02-26' & (seascape_class %in% c(12, 14)))
+ildat = filter(idat, date == '2016-02-26')
+date_ = "2016-02-26"
 
 p3 <- autoplot.bathy(bat, geom = c("contour", "raster"), coast=TRUE, show.legend = FALSE) +
   geom_raster(aes(fill=z), show.legend = FALSE) +
@@ -121,7 +119,9 @@ p3 <- autoplot.bathy(bat, geom = c("contour", "raster"), coast=TRUE, show.legend
   geom_point(data=sdat, aes(x=lon, y=lat, color=factor(seascape_class)), size = 0.5) +
   geom_path(data = eez[order(eez$order), ], aes(x=lon, y=lat), linetype = "dashed", alpha = 0.5) +
   geom_point(data=ildat, aes(lon1, lat1, color=factor(illegal))) +
-  labs(x=NULL, y=NULL, title = "legal") +
+  labs(x=NULL, y=NULL, title='illegal') +
+  annotate("text", x=-65.7, y = -39.25, label=date_, size = 4, color='black', fontface=2) +
+  annotate("text", x=-54.6, y = -39.25, label="# Illegal Vessels = 76", size = 4, color='black', fontface=2) +
   # guides(color = guide_colorbar(label.hjust = unit(0, 'cm'),
   #                               frame.colour = "black",
   #                               barwidth = .5,
@@ -131,42 +131,45 @@ p3 <- autoplot.bathy(bat, geom = c("contour", "raster"), coast=TRUE, show.legend
   annotate("segment", x=-Inf, xend=-Inf, y=-Inf, yend=Inf, color = "black", size=1) + # Left
   annotate("segment", x=Inf, xend=Inf, y=-Inf, yend=Inf, color = "black", size=1) + # Right
   annotate("segment", x=-Inf, xend=Inf, y=Inf, yend=Inf, color = "black", size=1) + # Top
-  # scale_color_manual(values = c("0" = "#440154FF", "1" = "#31688EFF", "2" = "#35B779FF", "3" = "#FDE725FF")) +
+  scale_color_manual(values = c("0" = "black", "1" = "red", "12" = "darkblue", "14" = "orange")) +
   NULL
 p3
 
-plot_grid(p2, p3, ncol=2)
+
+# Seascapes (2016-01-25)
+sdat = filter(dat, !is.na(seascape_class) & date == '2016-01-25' & (seascape_class %in% c(12, 14)))
+ildat = filter(idat, date == '2016-01-25')
+date_ = "2016-01-25"
+
+p4 <- autoplot.bathy(bat, geom = c("contour", "raster"), coast=TRUE, show.legend = FALSE) +
+  geom_raster(aes(fill=z), show.legend = FALSE) +
+  geom_contour(aes(z = z), color = "white", alpha = 0.01, show.legend = FALSE) +
+  scale_fill_gradientn(values = scales::rescale(c(-6600, 0, 39, 1500)),
+                       colors = c("lightsteelblue4", "lightsteelblue2", "#C6E0FC", "grey50", "grey80")) +
+  
+  geom_point(data=sdat, aes(x=lon, y=lat, color=factor(seascape_class)), size = 0.25) +
+  geom_path(data = eez[order(eez$order), ], aes(x=lon, y=lat), linetype = "dashed", alpha = 0.5) +
+  geom_point(data=ildat, aes(lon1, lat1, color=factor(illegal)), size=.5) +
+  labs(x=NULL, y=NULL, title = "legal") +
+  annotate("text", x=-65.7, y = -39.25, label=date_, size = 4, color='black', fontface=2) +
+  annotate("text", x=-54.6, y = -39.25, label="# Illegal Vessels = 3", size = 4, color='black', fontface=2) +
+  # guides(color = guide_colorbar(label.hjust = unit(0, 'cm'),
+  #                               frame.colour = "black",
+  #                               barwidth = .5,
+  #                               barheight = 12)) +
+  # Legend up top
+  annotate("segment", x=-Inf, xend=Inf, y=-Inf, yend=-Inf, color = "black", size=1) +  # Bottom
+  annotate("segment", x=-Inf, xend=-Inf, y=-Inf, yend=Inf, color = "black", size=1) +  # Left
+  annotate("segment", x=Inf, xend=Inf, y=-Inf, yend=Inf, color = "black", size=1) +    # Right
+  annotate("segment", x=-Inf, xend=Inf, y=Inf, yend=Inf, color = "black", size=1) +    # Top
+  scale_color_manual(values = c("0" = "black", "1" = "red", "12" = "darkblue", "14" = "orange")) +
+  NULL
+p4
+
+plot_grid(p3, p4, ncol=2)
 
 
-ggsave("~/Projects/predicting-illegal-fishing/figures/SEA_map.pdf", width=12, height = 5)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+ggsave("~/Projects/predicting-illegal-fishing/figures/SEA_map.pdf", width=12, height = 6)
 
 
 
