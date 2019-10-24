@@ -57,7 +57,7 @@ seascape_lag_dummies = pd.get_dummies(moddat['seascape_lag'], prefix='seascapela
 month_dummies = pd.get_dummies(moddat['month_abbr']).reset_index(drop=True)
 
 # Concat dummy variables
-moddat = pd.concat([moddat, seascape_dummies, seascape_lag_dummies, month_dummies], axis=1)
+moddat = pd.concat([moddat, seascape_dummies, month_dummies], axis=1)
 
 # Get X, y
 y = moddat[['year', 'illegal']].reset_index(drop=True)
@@ -72,7 +72,7 @@ X.head()
 y.head()
 
 # Cross-validate model
-roc_dat = pd.DataFrame()
+probdat = pd.DataFrame()
 tpr_fpr = pd.DataFrame()
 feffort = pd.DataFrame()
 sdat = pd.DataFrame()
@@ -96,14 +96,18 @@ for year in range(2012, 2017):
     #clf = LogisticRegression().fit(X_train, y_train)
     # Parameter tuning
     # n_estimators: 1600, min_samples_split: 2, min_samples_leaf:2, max_depth:40, bootstrap:True
-    clf = RandomForestClassifier(n_estimators = 100).fit(X_train, y_train)
+    clf = RandomForestClassifier(n_estimators = 100, random_state=123).fit(X_train, y_train)
     # clf = RandomForestClassifier(n_estimators=1600, 
     #                              min_samples_split=2,
     #                              max_depth=40,
     #                              bootstrap=True).fit(X_train, y_train)
     # Get predicted probabilities for sensitivity analysis
+    
+    # Get predicted probabilities
     pred_proba = clf.predict_proba(X_test)
     proba = pred_proba[:, 1]
+    pindat = pd.DataFrame({'year': year, 'illegal': y_test, 'pred_prob': proba, 'lat': X_test.lat1, 'lon': X_test.lon1})
+    probdat = pd.concat([probdat, pindat])
     # Get predictions and fishing hours
     y_pred = clf.predict(X_test)
     # data frame of true, pred, and fishing hours
@@ -136,6 +140,9 @@ for year in range(2012, 2017):
     sdat = pd.concat([sdat, ddat])
 
 
+# Save predicted prob
+probdat = probdat.reset_index(drop=True)
+probdat.to_feather('data/rf_predicted_probabilities.feather')
 
 # Save fishing hours data
 feffort = feffort.reset_index(drop=True)

@@ -118,7 +118,7 @@ p3 <- autoplot.bathy(bat, geom = c("contour", "raster"), coast=TRUE, show.legend
   
   geom_point(data=sdat, aes(x=lon, y=lat, color=factor(seascape_class)), size = 0.5) +
   geom_path(data = eez[order(eez$order), ], aes(x=lon, y=lat), linetype = "dashed", alpha = 0.5) +
-  geom_point(data=ildat, aes(lon1, lat1, color=factor(illegal))) +
+  geom_point(data=ildat, aes(lon1, lat1, color=factor(illegal)), size=0.5) +
   labs(x=NULL, y=NULL, title='illegal') +
   annotate("text", x=-65.7, y = -39.25, label=date_, size = 4, color='black', fontface=2) +
   annotate("text", x=-54.6, y = -39.25, label="# Illegal Vessels = 76", size = 4, color='black', fontface=2) +
