@@ -171,8 +171,8 @@ ggplot(pdat, aes(month_name, total_illegal, fill=factor(year))) +
   NULL
 
 
-ggsave("~/Projects/predicting-illegal-fishing/figures/Figure 2.pdf", width=8, height=4)
-ggsave("~/Projects/predicting-illegal-fishing/figures/Figure 2.png", width=8, height=4)
+ggsave("~/Projects/predicting-illegal-fishing/figures/Figure2.pdf", width=8, height=4)
+ggsave("~/Projects/predicting-illegal-fishing/figures/Figure2.png", width=8, height=4)
 
 
 
@@ -346,7 +346,7 @@ p1 <- autoplot.bathy(bat, geom = c("contour", "raster"), coast=TRUE, show.legend
   NULL
 p1
 
-ggsave("~/Projects/predicting-illegal-fishing/figures/Figure6a.pdf", width=5, height = 5)
+# ggsave("~/Projects/predicting-illegal-fishing/figures/Figure6a.pdf", width=5, height = 5)
 
 
 # Seascapes (2016-01-25)
@@ -392,7 +392,7 @@ p2 <- autoplot.bathy(bat, geom = c("contour", "raster"), coast=TRUE, show.legend
   NULL
 p2
 
-ggsave("~/Projects/predicting-illegal-fishing/figures/Figure6b.pdf", width=5, height = 5)
+# ggsave("~/Projects/predicting-illegal-fishing/figures/Figure6b.pdf", width=5, height = 5)
 
 plot_grid(p1, p2, ncol=2)
 
@@ -402,14 +402,8 @@ NULL
 
 
 
-
-
-
-
-
-
-# ------------------------------------------------------------------------------------
 # Figure *** Fishing effort explained
+# ::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 fe <- gather(fe, key=label, value = value, -year)
 fe <- filter(fe, label != "total_fishing")
@@ -432,92 +426,6 @@ ggplot(fe, aes(x=year, y=value, fill=factor(label))) +
   NULL
 
 ggsave("~/Projects/predicting-illegal-fishing/figures/explained_fishing_effort.pdf", width=6, height=4)
-
-
-
-
-
-
-
-
-
-# --------------------------------------------------------------------------------------------
-# Mapping figures
-
-dat <- read_feather('~/Projects/Seascape-and-fishing-effort/data/full_gfw_10d_effort_model_data_8DAY_2012-01-01_2016-12-26.feather')
-dat$year <- year(dat$date)
-dat$month <- month(dat$date)
-dat$year_month <- paste0(dat$month, "-", dat$year)
-dat <- filter(dat, flag %in% c("ARG", "CHN"))
-dat$illegal <- ifelse(dat$eez == TRUE, ifelse(dat$flag != "ARG", ifelse(dat$fishing_hours > 0, 1, 0), 0), 0)
-
-
-
-dat2 <- filter(dat, illegal == TRUE)
-dat2$year_month
-
-dat3 <- dat2 %>% 
-  group_by(year_month) %>% 
-  summarise(sum_fh = sum(fishing_hours))
-
-arrange(dat3, -sum_fh)
-arrange(dat3, sum_fh)
-
-ggplot(dat3, aes(x=year_month, y=sum_fh)) + geom_bar(stat='identity')
-
-
-
-
-# Check EEZ Map
-
-eez <- read_csv("~/Projects/Anomalous-IUU-Events-Argentina/data/Argentina_EEZ.csv")
-eez <- filter(eez, lon >= -68 & lon <= -51 & lat >= -51 & lat <= -39)
-eez <- filter(eez, order <= 25190)
-
-bat <- getNOAA.bathy(-68, -51, -51, -39, res = 1, keep = TRUE)
-
-
-dat <- read_feather('~/Projects/Seascape-and-fishing-effort/data/full_gfw_10d_effort_model_data_8DAY_2012-01-01_2016-12-26.feather')
-
-
-
-
-
-
-autoplot.bathy(bat, geom = c("contour", "raster"), coast=TRUE) +
-  geom_raster(aes(fill=z)) +
-  geom_contour(aes(z = z), color = "white", alpha = 0.01) +
-  
-  scale_fill_gradientn(values = scales::rescale(c(-6600, 0, 39, 1500)),
-                       colors = c("lightsteelblue4", "lightsteelblue2", "#C6E0FC", "grey50", "grey80")) +
-  
-  geom_point(data = dat2, aes(x=lon1, y=lat1, color=distance_to_eez_km)) +
-  geom_path(data = eez[order(eez$order), ], aes(x=lon, y=lat), linetype = "dashed", alpha = 0.5) +
-  # annotate("text", x=-54.5, y = -39.25, label=date_, size = 4, color='black', fontface=2) +
-  # theme(axis.title.x=element_blank(),
-  #       axis.text.x=element_blank(),
-  #       axis.ticks.x=element_blank(),
-  #       axis.title.y=element_blank(),
-  #       axis.text.y=element_blank(),
-  #       axis.ticks.y=element_blank(),
-  #       legend.direction = 'vertical',
-  #       legend.justification = 'center',
-  #       legend.position = "none",
-  #       legend.margin=margin(l = 0, unit='cm'),
-#       legend.text = element_text(size=10),
-#       legend.title = element_text(size=12),
-#       panel.grid = element_blank()) +
-
-# Legend up top
-annotate("segment", x=-Inf, xend=Inf, y=-Inf, yend=-Inf, color = "black", size=1) + #Bottom
-  annotate("segment", x=-Inf, xend=-Inf, y=-Inf, yend=Inf, color = "black", size=1) + # Left
-  annotate("segment", x=Inf, xend=Inf, y=-Inf, yend=Inf, color = "black", size=1) + # Right
-  annotate("segment", x=-Inf, xend=Inf, y=Inf, yend=Inf, color = "black", size=1) + # Top
-  # scale_color_manual(values = c("0" = "#440154FF", "1" = "#31688EFF", "2" = "#35B779FF", "3" = "#FDE725FF")) +
-  NULL
-
-
-
 
 
 
