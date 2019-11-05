@@ -8,16 +8,14 @@ from sklearn.preprocessing import MinMaxScaler
 from statsmodels.discrete.discrete_model import Logit
 from sklearn.linear_model import LogisticRegression, LogisticRegressionCV
 from sklearn.model_selection import train_test_split
-from sklearn.model_selection import cross_validate
+from sklearn.model_selection import cross_validate, cross_val_score
 from sklearn.metrics import mean_squared_error, average_precision_score, accuracy_score, roc_curve, auc, precision_recall_curve, f1_score
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 import sklearn.metrics as metrics
 from sklearn.model_selection import RandomizedSearchCV, TimeSeriesSplit, GridSearchCV
 from collections import deque
 import calendar
-
-# Daily data
-#dat = pd.read_feather('data/full_gfw_10d_illegal_model_data_DAILY_2012-01-01_2016-12-31.feather')
+from sklearn.linear_model import LinearRegression
 
 # 8Day data
 dat = pd.read_feather('data/full_gfw_10d_effort_model_data_8DAY_2012-01-01_2016-12-26.feather')
@@ -42,7 +40,7 @@ dat.loc[:, 'month'] = pd.DatetimeIndex(dat['date']).month
 # Convert month number to name
 dat.loc[:, 'month_abbr'] = dat.apply(lambda x: calendar.month_abbr[x['month']], 1)
 
-# Linear model
+
 # Get data frame of variables and dummy seascapes
 # moddat = dat[['illegal', 'year', 'fishing_hours', 'month_abbr', 'seascape_class', 'sst', 'sst_grad', 'chlor_a', 'lon1', 'lat1', 'depth_m', 'coast_dist_km', 'port_dist_km', 'eez', 'distance_to_eez_km']].dropna().reset_index(drop=True)
 
@@ -50,7 +48,7 @@ moddat = dat[['illegal_fishing_effort', 'year', 'month_abbr', 'seascape_class', 
               'chlor_a', 'lon1', 'lat1', 'coast_dist_km', 'port_dist_km', 'eez', 
               'distance_to_eez_km']].dropna().reset_index(drop=True)
 
-moddat = dat[['illegal_fishing_effort', 'year', 'month_abbr', 'seascape_class', 'sst']].dropna().reset_index(drop=True)
+# moddat = dat[['illegal_fishing_effort', 'year', 'month_abbr', 'seascape_class', 'sst']].dropna().reset_index(drop=True)
 
 # Dummy variables for seascape and dummies
 seascape_dummies = pd.get_dummies(moddat['seascape_class'], prefix='seascape').reset_index(drop=True)
@@ -71,8 +69,18 @@ X.columns
 X.head()
 y.head()
 
+
+# X = X.drop(columns='year')
+# y = y.drop(columns='year').values
+
+
+#clf = RandomForestRegressor(n_estimators = 100)
+#cross_val_score(clf, X, y, cv=5)
+
+
 # Cross-validate model
 sdat = pd.DataFrame()
+ddat = pd.DataFrame()
 for year in range(2013, 2017):
     
     # Get training data
@@ -95,7 +103,7 @@ for year in range(2013, 2017):
     
 
     # Random Forest Regression
-    clf = RandomForestRegressor(n_estimators = 100).fit(X_train, y_train)
+    clf = RandomForestRegressor(n_estimators = 100, random_state=123).fit(X_train, y_train)
     test_r2 = clf.score(X_test, y_test)
     train_r2 = clf.score(X_train, y_train)
        
@@ -107,7 +115,7 @@ for year in range(2013, 2017):
     
     y_test_pred = clf.predict(X_test)
     y_test_true = y_test
-
+    
     train_mse = mean_squared_error(y_train_true, y_train_pred)
     test_mse = mean_squared_error(y_test_true, y_test_pred)
     
@@ -118,15 +126,19 @@ for year in range(2013, 2017):
                            'Test Coefficient of Det.': [train_r2]})
     sdat = pd.concat([sdat, outdat])
     print(f"Train MSE: {round(train_mse, 4)} ------ Test MSE: {round(test_mse, 4)}")
+    
+    outdat2 = pd.DataFrame({'year': year,
+                            'y_true': y_test_true,
+                            'y_pred': y_test_pred,
+                            'lat': X_test.lat1,
+                            'lon': X_test.lon1})
+    ddat = pd.concat([ddat, outdat2])
+    
 print(sdat)
 
 # Save fishing hours data
-feffort = feffort.reset_index(drop=True)
-feffort = feffort.to_feather('data/predicted_effort_data.feather')
-
-# Save precision-recall data
-sdat = sdat.reset_index(drop=True)
-sdat.to_feather('data/illegal_cross_val_dat.feather')
+feffort = ddat.reset_index(drop=True)
+feffort.to_feather('data/predicted_effort_data.feather')
 
 # Feature importance
 fea_import = pd.DataFrame({'variable': X_train.columns , 'importance': clf.feature_importances_})
