@@ -77,7 +77,7 @@ tpr_fpr = pd.DataFrame()
 feffort = pd.DataFrame()
 sdat = pd.DataFrame()
 
-for year in range(2012, 2017):
+for year in range(2013, 2017):
     # Get training data
     X_train = X[X.year != year]
     y_train = y[y.year != year]
