@@ -211,6 +211,15 @@ ggsave("~/Projects/predicting-illegal-fishing/figures/Figure3.png", width = 6, h
 # Figure 4. Feature Importance
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
+# To plot radar plot below
+coord_radar <- function (theta = "x", start = 0, direction = 1) {
+  theta <- match.arg(theta, c("x", "y"))
+  r <- if (theta == "x") "y" else "x"
+  ggproto("CordRadar", CoordPolar, theta = theta, r = r, start = start, 
+          direction = sign(direction),
+          is_linear = function(coord) TRUE)
+}
+
 fea <- read_feather('~/Projects/predicting-illegal-fishing/data/feature_importance_rf_illegal.feather')
 
 fea_dat <- data.frame("variable" = c("distance_to_eez_km", "eez", "coast_dist_km", "lon1", "port_dist_km", "lat1",
@@ -233,18 +242,48 @@ fea_dat <- data.frame("variable" = c("distance_to_eez_km", "eez", "coast_dist_km
                                    , "Seascape 30", "Seascape 31", "Seascape 32", "Seascape 33", "Seascape 34"))
 
 fea <- left_join(fea, fea_dat, by = "variable")
-fea <- dplyr::select(fea, labels, importance)
+fea <- dplyr::select(fea, labels, importance, year)
 
-ggplot(fea, aes(reorder(labels, importance), importance)) + 
-  geom_bar(stat='identity') +
-  theme_tufte(12) +
-  labs(x=NULL, y="Feature Importance") +
-  theme(panel.border = element_rect(colour = "black", fill=NA, size=1)) +
-  coord_flip() +
+# Get top five from each  year
+fea <- fea %>% 
+  group_by(year) %>% 
+  arrange(-importance) %>% 
+  do(head(., n = 5)) %>% 
+  ungroup()
+
+
+fead <- fead %>% group_by(year) %>% 
+  arrange(labels, year) %>% 
+  ungroup()
+fead
+
+ggplot(fead, aes(x=labels, y=importance, color=factor(year), group=factor(year))) + 
+  geom_polygon(fill=NA) +
+  labs(y=NULL, x=NULL, color=NULL) + 
+  geom_point(size = 1) +
+  theme_bw() +
+  guides(color = guide_legend(keywidth = 1, keyheight = 1,
+                       override.aes = list(size = .5, shape = NA))) +
+  theme(panel.grid.major = element_line(colour = "grey"), 
+        legend.position = c(.9, 0.15),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank()) +
+  coord_radar() +
+  annotate("text", x=.5, y=0.35, label = "0.35", color='darkgrey',vjust=-.45) + 
+  annotate("text", x=.5, y=0.30, label = "0.30", color='darkgrey',vjust=-.45) + 
+  annotate("text", x=.5, y=0.25, label = "0.25", color='darkgrey',vjust=-.45) + 
+  annotate("text", x=.5, y=0.20, label = "0.20", color='darkgrey',vjust=-.45) + 
+  annotate("text", x=.5, y=0.15, label = "0.15", color='darkgrey',vjust=-.45) + 
   NULL
+  
 
-ggsave("~/Projects/predicting-illegal-fishing/figures/Figure4.pdf", width = 6, height = 5)
-ggsave("~/Projects/predicting-illegal-fishing/figures/Figure4.png", width = 6, height = 5)
+  
+
+ggsave("~/Projects/predicting-illegal-fishing/figures/Figure4.pdf", width = 5, height = 4.5)
+ggsave("~/Projects/predicting-illegal-fishing/figures/Figure4.png", width = 5, height = 4.5)
+
+
+
 
 
 # Figure 5. Movement from legal to illegal seascape

@@ -49,11 +49,17 @@ dat['seascape_lag'] = dat.groupby(['date', 'mmsi'])['seascape_class'].shift(-1)
 # Get data frame of variables and dummy seascapes
 # moddat = dat[['illegal', 'year', 'fishing_hours', 'month_abbr', 'seascape_class', 'sst', 'sst_grad', 'chlor_a', 'lon1', 'lat1', 'depth_m', 'coast_dist_km', 'port_dist_km', 'eez', 'distance_to_eez_km']].dropna().reset_index(drop=True)
 
-moddat = dat[['illegal', 'year', 'month_abbr','seascape_lag', 'fishing_hours', 'seascape_class', 'sst', 'chlor_a', 'lon1', 'lat1', 'coast_dist_km', 'port_dist_km', 'eez', 'distance_to_eez_km']].dropna().reset_index(drop=True)
+# Include measures of distance
+# moddat = dat[['illegal', 'year', 'month_abbr',
+#              'seascape_class', 'sst', 'chlor_a', 'lon1', 'lat1', 
+#              'coast_dist_km', 'port_dist_km', 'eez', 'distance_to_eez_km']].dropna().reset_index(drop=True)
 
+# Drop measures of distance
+moddat = dat[['illegal', 'year', 'month_abbr',
+             'seascape_class', 'sst', 'chlor_a', 'lon1', 'lat1', 'eez']].dropna().reset_index(drop=True)
+ 
 # Dummy variables for seascape and dummies
 seascape_dummies = pd.get_dummies(moddat['seascape_class'], prefix='seascape').reset_index(drop=True)
-seascape_lag_dummies = pd.get_dummies(moddat['seascape_lag'], prefix='seascapelag').reset_index(drop=True)
 month_dummies = pd.get_dummies(moddat['month_abbr']).reset_index(drop=True)
 
 # Concat dummy variables
@@ -63,7 +69,7 @@ moddat = pd.concat([moddat, seascape_dummies, month_dummies], axis=1)
 y = moddat[['year', 'illegal']].reset_index(drop=True)
 
 # Drop dummy variables and prediction
-moddat = moddat.drop(columns = ['month_abbr', 'illegal', 'seascape_class', 'seascape_lag'])
+moddat = moddat.drop(columns = ['month_abbr', 'illegal', 'seascape_class'])
 
 # Build data for model
 X = moddat
@@ -72,12 +78,11 @@ X.head()
 y.head()
 
 # Cross-validate model
-probdat = pd.DataFrame()
-tpr_fpr = pd.DataFrame()
 feffort = pd.DataFrame()
 sdat = pd.DataFrame()
+feadat = pd.DataFrame()
 
-for year in range(2013, 2017):
+for year in range(2012, 2017):
     # Get training data
     X_train = X[X.year != year]
     y_train = y[y.year != year]
@@ -85,7 +90,7 @@ for year in range(2013, 2017):
     X_test = X[X.year == year]
     y_test = y[y.year == year]
     print(f"Training Years: {X_train.year.unique()} - Test Year: {X_test.year.unique()}")
-    fishing_hours = X_test['fishing_hours']
+
     # Drop year
     X_train = X_train.drop(columns = ['year'])
     X_test = X_test.drop(columns = ['year'])
@@ -106,51 +111,40 @@ for year in range(2013, 2017):
     # Get predicted probabilities
     pred_proba = clf.predict_proba(X_test)
     proba = pred_proba[:, 1]
-    pindat = pd.DataFrame({'year': year, 'illegal': y_test, 'pred_prob': proba, 'lat': X_test.lat1, 'lon': X_test.lon1})
-    probdat = pd.concat([probdat, pindat])
-    # Get predictions and fishing hours
-    y_pred = clf.predict(X_test)
-    # data frame of true, pred, and fishing hours
-    pred_dat = pd.DataFrame({'y_true': y_test, 'y_pred': y_pred, 'fishing_hours': fishing_hours})
-    tf_dat = pred_dat[pred_dat['y_true'] == 1]
-    tf = sum(tf_dat['fishing_hours'])
-    # True positive
-    fh_tpr_dat = pred_dat[(pred_dat['y_true'] == 1) & (pred_dat['y_pred'] == 1)]
-    # False positive
-    fh_fpr_dat = pred_dat[((pred_dat['y_true'] == 0) & (pred_dat['y_pred'] != 0)) | ((pred_dat['y_true'] == 1) & (pred_dat['y_pred'] != 1))]
-    tpr_fishing_hours = sum(fh_tpr_dat['fishing_hours'])
-    fpr_fishing_hours = sum(fh_fpr_dat['fishing_hours'])
-    total_fishing_hours = sum(pred_dat['fishing_hours'])
-    feffort_indat = pd.DataFrame({'year': [year], 'total_fishing': [tf], 'tpr_fishing': [tpr_fishing_hours], 'fpr_fishing_hours': [fpr_fishing_hours]})
-    feffort = pd.concat([feffort, feffort_indat])
+
     # Precision-recall across thresholds
     # Precision = tp / ( tp + fp )
     # Recall = tn / ( tn + fp )
     precision, recall, thresholds = precision_recall_curve(y_test, proba )
+    
     # Test predictions
     y_pred = clf.predict(X_test)
+    
     # F1 score = 2 * precision * recall / precision + recall
     f1 = f1_score(y_test, y_pred)
+    
     # calculate precision-recall AUC
     auc_m = auc(recall, precision)
+    
+    # Feature importance
+    fea_import = pd.DataFrame({'variable': X_train.columns , 'importance': clf.feature_importances_, 'year': year})
+    feadat = pd.concat([feadat, fea_import])
+    
     # calculate average precision score
     ap = average_precision_score(y_test, proba)
     print('f1=%.3f auc=%.3f ap=%.3f' % (f1, auc_m, ap))
-    ddat = pd.DataFrame({'year': year, 'prec': precision, 'recall': recall, 'f1': f1, 'auc':auc_m, 'ap':ap})
+    ddat = pd.DataFrame({'year': year, 'prec': precision, 'recall': recall, 'f1': f1, 'auc': auc_m, 'ap':ap})
     sdat = pd.concat([sdat, ddat])
 
-
-# Save predicted prob
-probdat = probdat.reset_index(drop=True)
-probdat.to_feather('data/rf_predicted_probabilities.feather')
-
-# Save fishing hours data
-feffort = feffort.reset_index(drop=True)
-feffort = feffort.to_feather('data/predicted_effort_data.feather')
 
 # Save precision-recall data
 sdat = sdat.reset_index(drop=True)
 sdat.to_feather('data/illegal_cross_val_dat.feather')
+
+# Feature Importance
+feadat = feadat.reset_index(drop=True)
+feadat.to_feather('data/feature_importance_rf_illegal.feather')
+
 
 # Feature importance
 fea_import = pd.DataFrame({'variable': X_train.columns , 'importance': clf.feature_importances_})

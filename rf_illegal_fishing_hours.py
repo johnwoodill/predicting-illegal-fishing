@@ -81,7 +81,7 @@ y.head()
 # Cross-validate model
 sdat = pd.DataFrame()
 ddat = pd.DataFrame()
-for year in range(2013, 2017):
+for year in range(2012, 2017):
     
     # Get training data
     X_train = X[X.year != year]
