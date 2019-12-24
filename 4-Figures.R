@@ -4,6 +4,8 @@ library(feather)
 library(viridis)
 library(lubridate)
 library(stringr)
+library(marmap)
+library(cowplot)
 
 # 8-day Data
 dat <- read_feather('~/Projects/predicting-illegal-fishing/data/full_gfw_10d_effort_model_data_8DAY_2012-01-01_2016-12-26.feather')
@@ -160,7 +162,7 @@ ggplot(pdat, aes(month_name, total_illegal, fill=factor(year))) +
   scale_fill_grey() +
   theme_tufte(12) +
   labs(x=NULL, y="Count of Illegal Chinese \n Vessels Fishing") +
-  theme(legend.position = c(.95, .825),
+  theme(legend.position = c(.90, .825),
         legend.direction = 'vertical',
         legend.justification = 'center',
         legend.text = element_text(size=8),
@@ -171,8 +173,7 @@ ggplot(pdat, aes(month_name, total_illegal, fill=factor(year))) +
   NULL
 
 
-ggsave("~/Projects/predicting-illegal-fishing/figures/Figure2.pdf", width=8, height=4)
-ggsave("~/Projects/predicting-illegal-fishing/figures/Figure2.png", width=8, height=4)
+ggsave("~/Projects/predicting-illegal-fishing/figures/Figure2.png", width=5, height=4)
 
 
 
@@ -193,7 +194,7 @@ ggplot(mdat, aes(recall, prec, color=factor(year_label))) +
   scale_color_manual(values = viridis(6, option = "D")) +
   geom_line() +
   theme(legend.background = element_rect(colour = 'grey', fill = 'white', linetype='solid'),
-        legend.position = c(.225, .25),
+        legend.position = c(.25, .24),
         legend.direction = 'vertical',
         legend.justification = 'center',
         legend.text = element_text(size=8),
@@ -202,7 +203,6 @@ ggplot(mdat, aes(recall, prec, color=factor(year_label))) +
         panel.border = element_rect(colour = "black", fill=NA, size=1)) +
   NULL
 
-ggsave("~/Projects/predicting-illegal-fishing/figures/Figure3.pdf", width = 6, height = 4)
 ggsave("~/Projects/predicting-illegal-fishing/figures/Figure3.png", width = 6, height = 4)
 
 
@@ -279,7 +279,6 @@ ggplot(fead, aes(x=labels, y=importance, color=factor(year), group=factor(year))
 
   
 
-ggsave("~/Projects/predicting-illegal-fishing/figures/Figure4.pdf", width = 5, height = 4.5)
 ggsave("~/Projects/predicting-illegal-fishing/figures/Figure4.png", width = 5, height = 4.5)
 
 
@@ -324,8 +323,7 @@ p1 <- ggplot(dat4, aes(reorder(seascape_lag, seascape_lag, function(x) length(x)
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1)) +
   geom_text(stat='count', aes(label=..count..), hjust=-.20, size = 3)
 p1
-ggsave("~/Projects/predicting-illegal-fishing/figures/Figure5.pdf", width=6, height=3)
-ggsave("~/Projects/predicting-illegal-fishing/figures/Figure5.png", width=6, height=3)
+ggsave("~/Projects/predicting-illegal-fishing/figures/Figure5.png", width=5, height=3)
 
 
 
@@ -360,9 +358,9 @@ p1 <- autoplot.bathy(bat, geom = c("contour", "raster"), coast=TRUE, show.legend
   geom_point(data=ildat, aes(lon1, lat1, color=factor(illegal)), size=0.5) +
   geom_path(data = eez[order(eez$order), ], aes(x=lon, y=lat), linetype = "dashed", alpha = 0.5) +
   labs(x=NULL, y=NULL) +
-  annotate("text", x=-66.25, y = -39.25, label=date_, size = 4, color='black', fontface=2) +
+  annotate("text", x=-66, y = -39.25, label=date_, size = 4, color='black', fontface=2) +
   annotate("text", x=-65.1, y = -39.65, label="# Illegal Vessels = 76", size = 4, color='black', fontface=2) +
-  annotate("text", x=-63.65, y = -40.05, label="Temperate Blooms Upwelling", size = 4, fontface=2) +
+  annotate("text", x=-62.75, y = -40.05, label="Temperate Blooms Upwelling", size = 4, fontface=2) +
   annotate("text", x=-51.5, y = -39.25, label="(A)", size = 4, color='black', fontface=2) +
   theme(axis.title.x=element_blank(),
         axis.text.x=element_blank(),
@@ -383,7 +381,7 @@ p1 <- autoplot.bathy(bat, geom = c("contour", "raster"), coast=TRUE, show.legend
   annotate("segment", x=-Inf, xend=Inf, y=Inf, yend=Inf, color = "black", size=1) + # Top
   scale_color_manual(values = c("Legal" = "black", "Illegal" = "red", "Temperate Blooms Upwelling" = "cornflowerblue")) +
   NULL
-p1
+#p1
 
 # ggsave("~/Projects/predicting-illegal-fishing/figures/Figure6a.pdf", width=5, height = 5)
 
@@ -406,9 +404,9 @@ p2 <- autoplot.bathy(bat, geom = c("contour", "raster"), coast=TRUE, show.legend
   geom_path(data = eez[order(eez$order), ], aes(x=lon, y=lat), linetype = "dashed", alpha = 0.5) +
   labs(x=NULL, y=NULL) +
   geom_point(data = NULL, aes(x=-67.65, y = -40.05, shape=factor("temp_bloom")), size = 2, shape = 19, color="cornflowerblue") +
-  annotate("text", x=-66.25, y = -39.25, label=date_, size = 4, color='black', fontface=2) +
+  annotate("text", x=-66, y = -39.25, label=date_, size = 4, color='black', fontface=2) +
   annotate("text", x=-65.25, y = -39.65, label="# Illegal Vessels = 3", size = 4, color='black', fontface=2) +
-  annotate("text", x=-63.65, y = -40.05, label="Temperate Blooms Upwelling", size = 4, fontface=2) +
+  annotate("text", x=-62.75, y = -40.05, label="Temperate Blooms Upwelling", size = 4, fontface=2) +
   annotate("text", x=-51.5, y = -39.25, label="(B)", size = 4, color='black', fontface=2) +
   theme(axis.title.x=element_blank(),
         axis.text.x=element_blank(),
@@ -429,15 +427,200 @@ p2 <- autoplot.bathy(bat, geom = c("contour", "raster"), coast=TRUE, show.legend
   annotate("segment", x=-Inf, xend=Inf, y=Inf, yend=Inf, color = "black", size=1) + # Top
   scale_color_manual(values = c("Legal" = "black", "Illegal" = "red", "Temperate Blooms Upwelling" = "cornflowerblue")) +
   NULL
-p2
-
-# ggsave("~/Projects/predicting-illegal-fishing/figures/Figure6b.pdf", width=5, height = 5)
+#p2
 
 plot_grid(p1, p2, ncol=2)
 
+ggsave("~/Projects/predicting-illegal-fishing/figures/Figure6.png", width=10, height = 5, dpi=300)
 
-ggsave("~/Projects/predicting-illegal-fishing/figures/Figure6.pdf", width=10, height = 5)
-NULL
+
+
+
+# Figure 7 - Sensitivity analysis
+#----------------------------------------------------------
+
+mdattop5 <- read_feather('~/Projects/predicting-illegal-fishing/data/illegal_top5_cross_val_dat.feather')
+
+mdatbio <- read_feather('~/Projects/predicting-illegal-fishing/data/illegal_bio_cross_val_dat.feather')
+
+mdat2km <- read_feather('~/Projects/predicting-illegal-fishing/data/illegal_2k_cross_val_dat.feather')
+
+mdat5km <- read_feather('~/Projects/predicting-illegal-fishing/data/illegal_5k_cross_val_dat.feather')
+
+mdat10km <- read_feather('~/Projects/predicting-illegal-fishing/data/illegal_10k_cross_val_dat.feather')
+
+
+
+
+# ------------------------------------------------------------------------------------
+# 2km Cross-validation results
+
+# Figure ***
+mdat2km$year_label <- paste0(mdat2km$year, " - F1: ", round(mdat2km$f1, 2), " AUC: ", round(mdat2km$auc, 2), " AP: ", round(mdat2km$ap, 2))
+
+# Custom color palette
+cbp1 <- c("#999999", "#E69F00", "#56B4E9", "#009E73",
+          "#0072B2", "#D55E00", "#CC79A7")
+
+p1 <- ggplot(mdat2km, aes(recall, prec, color=factor(year_label))) + 
+  labs(x="Recall", y="Precision", color="2 km EEZ Buffer") +
+  theme_tufte(11) +
+  scale_color_manual(values = viridis(6, option = "D")) +
+  # scale_color_manual(values = cbp1) +
+  geom_line() +
+  theme(legend.background = element_rect(colour = 'grey', fill = 'white', linetype='solid'),
+        # legend.position = c(.310, .25),
+        legend.position = c(.28, .40),
+        legend.direction = 'vertical',
+        legend.justification = 'center',
+        legend.title.align = 0.5,
+        legend.text = element_text(size=7),
+        legend.title = element_text(size=8),
+        plot.title = element_text(hjust = 0.5),
+        legend.margin = margin(5, 25, 3, 3),
+        panel.border = element_rect(colour = "black", fill=NA, size=1)) +
+  NULL
+p1
+
+# ggsave("~/Projects/predicting-illegal-fishing/figures/FigureS1a.pdf", width = 6, height = 4)
+# ggsave("~/Projects/predicting-illegal-fishing/figures/FigureS1a.png", width = 6, height = 4)
+
+
+# ------------------------------------------------------------------------------------
+# 5km Cross-validation results
+
+# Figure ***
+mdat5km$year_label <- paste0(mdat5km$year, " - F1: ", round(mdat5km$f1, 2), " AUC: ", round(mdat5km$auc, 2), " AP: ", round(mdat5km$ap, 2))
+
+# Custom color palette
+cbp1 <- c("#999999", "#E69F00", "#56B4E9", "#009E73",
+          "#0072B2", "#D55E00", "#CC79A7")
+
+p2 <- ggplot(mdat5km, aes(recall, prec, color=factor(year_label))) + 
+  labs(x="Recall", y="Precision", color="5 km EEZ Buffer") +
+  theme_tufte(11) +
+  scale_color_manual(values = viridis(6, option = "D")) +
+  # scale_color_manual(values = cbp1) +
+  geom_line() +
+  theme(legend.background = element_rect(colour = 'grey', fill = 'white', linetype='solid'),
+        # legend.position = c(.310, .25),
+        legend.position = c(.28, .40),
+        legend.direction = 'vertical',
+        legend.title.align = 0.5,
+        legend.text = element_text(size=7),
+        legend.title = element_text(size=8),
+        plot.title = element_text(hjust = 0.5),
+        legend.margin = margin(5, 25, 3, 3),
+        panel.border = element_rect(colour = "black", fill=NA, size=1)) +
+  NULL
+p2
+
+# ggsave("~/Projects/predicting-illegal-fishing/figures/FigureS1b.pdf", width = 6, height = 4)
+# ggsave("~/Projects/predicting-illegal-fishing/figures/FigureS1b.png", width = 6, height = 4)
+
+
+
+# ------------------------------------------------------------------------------------
+# 10km Cross-validation results
+
+# Figure ***
+mdat10km$year_label <- paste0(mdat10km$year, " - F1: ", round(mdat10km$f1, 2), " AUC: ", round(mdat10km$auc, 2), " AP: ", round(mdat10km$ap, 2))
+
+# Custom color palette
+cbp1 <- c("#999999", "#E69F00", "#56B4E9", "#009E73",
+          "#0072B2", "#D55E00", "#CC79A7")
+
+p3 <- ggplot(mdat10km, aes(recall, prec, color=factor(year_label))) + 
+  labs(x="Recall", y="Precision", color="10 km EEZ Buffer") +
+  theme_tufte(11) +
+  scale_color_manual(values = viridis(6, option = "D")) +
+  geom_line() +
+  theme(legend.background = element_rect(colour = 'grey', fill = 'white', linetype='solid'),
+        # legend.position = c(.310, .25),
+        legend.position = c(.28, .40),
+        legend.direction = 'vertical',
+        legend.justification = 'center',
+        legend.title.align = 0.5,
+        legend.text = element_text(size=7),
+        legend.title = element_text(size=8),
+        plot.title = element_text(hjust = 0.5),
+        legend.margin = margin(5, 25, 3, 3),
+        panel.border = element_rect(colour = "black", fill=NA, size=1)) +
+  NULL
+p3
+
+# ggsave("~/Projects/predicting-illegal-fishing/figures/FigureS1c.pdf", width = 6, height = 4)
+# ggsave("~/Projects/predicting-illegal-fishing/figures/FigureS1c.png", width = 6, height = 4)
+
+
+
+# ------------------------------------------------------------------------------------
+# Top five variables
+
+# Figure ***
+mdattop5$year_label <- paste0(mdattop5$year, " - F1: ", round(mdattop5$f1, 2), " AUC: ", round(mdattop5$auc, 2), " AP: ", round(mdattop5$ap, 2))
+
+# Custom color palette
+cbp1 <- c("#999999", "#E69F00", "#56B4E9", "#009E73",
+          "#0072B2", "#D55E00", "#CC79A7")
+
+p4 <- ggplot(mdattop5, aes(recall, prec, color=factor(year_label))) + 
+  labs(x="Recall", y="Precision", color="Top 5 Variables") +
+  theme_tufte(11) +
+  scale_color_manual(values = viridis(6, option = "D")) +
+  geom_line() +
+  theme(legend.background = element_rect(colour = 'grey', fill = 'white', linetype='solid'),
+        # legend.position = c(.310, .25),
+        legend.position = c(.28, .40),
+        legend.direction = 'vertical',
+        legend.justification = 'center',
+        legend.title.align = 0.5,
+        legend.text = element_text(size=7),
+        legend.title = element_text(size=8),
+        plot.title = element_text(hjust = 0.5),
+        legend.margin = margin(5, 25, 3, 3),
+        panel.border = element_rect(colour = "black", fill=NA, size=1)) +
+  NULL
+p4
+
+
+
+# ------------------------------------------------------------------------------------
+# Bio model 
+
+# Figure ***
+mdatbio$year_label <- paste0(mdatbio$year, " - F1: ", round(mdatbio$f1, 2), " AUC: ", round(mdatbio$auc, 2), " AP: ", round(mdatbio$ap, 2))
+
+# Custom color palette
+cbp1 <- c("#999999", "#E69F00", "#56B4E9", "#009E73",
+          "#0072B2", "#D55E00", "#CC79A7")
+
+p5 <- ggplot(mdatbio, aes(recall, prec, color=factor(year_label))) + 
+  labs(x="Recall", y="Precision", color="Oceanographic Variables") +
+  theme_tufte(11) +
+  scale_color_manual(values = viridis(6, option = "D")) +
+  geom_line() +
+  theme(legend.background = element_rect(colour = 'grey', fill = 'white', linetype='solid'),
+        legend.position = c(.28, .40),
+        legend.direction = 'vertical',
+        legend.justification = 'center',
+        legend.title.align = 0.5,
+        legend.text = element_text(size=7),
+        legend.title = element_text(size=8),
+        plot.title = element_text(hjust = 0.5),
+        legend.margin = margin(5, 25, 3, 3),
+        panel.border = element_rect(colour = "black", fill=NA, size=1)) +
+  NULL
+p5
+
+
+
+
+
+
+plot_grid(p4, p5, p1, p2, p3, ncol=2, labels = c("(A)", "(B)", "(C)", "(D)", "(E)"), label_x = .88, label_y = .98)
+
+ggsave("~/Projects/predicting-illegal-fishing/figures/Figure7.png", width = 10, height = 8, dpi=300)
 
 
 
