@@ -185,7 +185,9 @@ map2 <-
         legend.key=element_blank(),
         # legend.position = c(.93, 0.2),
         # legend.margin=margin(l = 0, unit='cm'),
-        legend.text = element_text(size=8.5),
+        #element_text(margin = margin(r = 10, unit = "pt"))
+        legend.text = element_text(size=8.5, margin = margin(r = 5, unit = "pt")),
+        # legend.text = element_text(size=8.5),
         legend.title = element_text(size=9),
         legend.background = element_blank(),
         # legend.spacing.x = unit(0.30, 'cm'),
@@ -199,7 +201,7 @@ map2 <-
   guides(fill = FALSE,
          color = guide_legend(title.position = "bottom",
                               title.hjust = 0.5,
-                              override.aes=list(fill=NA, shape=15, size=5),
+                              override.aes=list(fill=NA, shape=15, size=4),
                               keywidth=0.01,
                               keyheight=0.01,
                               default.unit="inch")) +
@@ -218,11 +220,9 @@ map2
 ggsave("~/Projects/predicting-illegal-fishing/figures/Figure1.png", width=5, height=5)
 
 
-ggdraw() + draw_plot(map2) 
+ggdraw() + draw_plot(map2) + draw_plot(map1, .67, .147, height = .26, width = .25)
 
-  draw_plot(map1, .025, .024, height = .26, width = .25)
-
-ggsave("~/Projects/predicting-illegal-fishing/figures/Figure1.pdf", width=5, height=5)
+#ggsave("~/Projects/predicting-illegal-fishing/figures/Figure1.pdf", width=5, height=5)
 ggsave("~/Projects/predicting-illegal-fishing/figures/Figure1.png", width=5, height=5)
 #
 
