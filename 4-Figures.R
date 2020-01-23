@@ -6,6 +6,7 @@ library(lubridate)
 library(stringr)
 library(marmap)
 library(cowplot)
+library(ggmap)
 
 # 8-day Data
 dat <- read_feather('~/Projects/predicting-illegal-fishing/data/full_gfw_10d_effort_model_data_8DAY_2012-01-01_2016-12-26.feather')
@@ -13,10 +14,62 @@ dat <- read_feather('~/Projects/predicting-illegal-fishing/data/full_gfw_10d_eff
 # Fishing Effort predictions
 fe <- read_feather('~/Projects/predicting-illegal-fishing/data/predicted_effort_data.feather')
 
+# Seascape data
+sea <- read_feather("~/Projects/predicting-illegal-fishing/data/patagonia_shelf_seascapes_2012-2016.feather")
+
 # Custom color palette
 cbp1 <- c("#999999", "#E69F00", "#56B4E9", "#009E73",
           "#0072B2", "#D55E00", "#CC79A7")
 
+# Google key for map
+gkey <- read_file("~/Projects/predicting-illegal-fishing/Google_api_key.txt")
+register_google(key = gkey)
+
+seascape_labels <- data.frame(seascape_class = seq(1, 33),
+                              seascape_name = c("NORTH ATLANTIC SPRING, ACC TRANSITION",
+                                                    "SUBPOLAR TRANSITION",
+                                                    "TROPICAL SUBTROPICAL TRANSITION",
+                                                    "WESTERN WARM POOL SUBTROPICAL",
+                                                    "SUBTROPICAL GYRE TRANSITION",
+                                                    "ACC, NUTRIENT STRESS",
+                                                    "TEMPERATE TRANSITION",
+                                                    "INDOPACIFIC SUBTROPICAL GYRE",
+                                                    "EQUATORIAL TRANSITION",
+                                                    "HIGHLY OLIGOTROPHIC SUBTROPICAL GYRE",
+                                                    "TROPICAL/SUBTROPICAL UPWELLING",
+                                                    "SUBPOLAR",
+                                                    "SUBTROPICAL GYRE MESOSCALE INFLUENCED",
+                                                    "TEMPERATE BLOOMS UPWELLING",
+                                                    "TROPICAL SEAS",
+                                                    "MEDITTERANEAN RED SEA",
+                                                    "SUBTROPICAL TRANSITION \n LOW NUTRIENT STRESS",
+                                                    "MEDITTERANEAN RED SEA",
+                                                    "ARTIC/ SUBPOLAR SHELVES",
+                                                    "SUBTROPICAL, FRESH INFLUENCED COASTAL",
+                                                    "WARM, BLOOMS, HIGH NUTS",
+                                                    "ARCTIC LATE SUMMER",
+                                                    "FRESHWATER INFLUENCED POLAR SHELVES",
+                                                    "ANTARCTIC SHELVES",
+                                                    "ICE PACK",
+                                                    "ANTARCTIC ICE EDGE",
+                                                    "HYPERSALINE EUTROPHIC, \n PERSIAN GULF, RED SEA",
+                                                    "ARCTIC ICE EDGE","ANTARCTIC",
+                                                    "ICE EDGE  BLOOM",
+                                                    "1-30% ICE PRESENT",
+                                                    "30-80% MARGINAL ICE","PACK ICE"))
+
+
+
+LON1 = -68
+LON2 = -51
+LAT1 = -51
+LAT2 = -39
+
+# EEZ line
+eez <- as.data.frame(read_csv("~/Projects/Puerto_Madryn_IUU_Fleet_Behavior/data/Argentina_EEZ.csv"))
+eez <- filter(eez, lon >= LON1 & lon <= LON2)
+eez <- filter(eez, lat >= LAT1 & lat <= LAT2)
+eez <- filter(eez, order <= 28242)
 
 dat$lat_lon <- paste0(dat$lat1, "_", dat$lon1)
 
@@ -26,7 +79,7 @@ nrow(dat)
 
 
 # ------------------------------------------------------------------------------------
-# Figure 1. Number of illegal events per month and year
+# Figure 1. Map of Region
 mapdat <- dat
 mapdat$year <- year(mapdat$date)
 mapdat$month <- month(mapdat$date)
@@ -34,14 +87,32 @@ mapdat$year_month <- paste0(mapdat$month, "-", mapdat$year)
 mapdat <- filter(mapdat, flag %in% c("ARG", "CHN"))
 mapdat$illegal <- ifelse(mapdat$eez == TRUE, ifelse(mapdat$flag != "ARG", ifelse(mapdat$fishing_hours > 0, 1, 0), 0), 0)
 mapdat$lat_lon <- paste0(mapdat$lat1, "_", mapdat$lon1)
+mapdat <- filter(mapdat, date == "2016-03-13")
 
-mapdat2 <- mapdat %>% 
-  group_by(lat_lon) %>% 
-  summarise(sum_illegal = sum(illegal),
-            lat = mean(lat1),
-            lon = mean(lon1))
+# Filter seascape data
+seadat <- filter(sea, date == "2016-03-13")
+seadat <- left_join(seadat, seascape_labels, by='seascape_class')
 
-mapdat2
+seadat$seascape_name <- ifelse(seadat$seascape_class == 7 | seadat$seascape_class == 14, seadat$seascape_class, "Other")
+seadat <- drop_na(seadat)
+
+# seadat <- filter(seadat, seascape_class %in% c(7,14))
+
+seadat$seascape_name <- ifelse(seadat$seascape_name == 7, "Temperate Transition", seadat$seascape_name)
+seadat$seascape_name <- ifelse(seadat$seascape_name == 14, "Temperate Blooms Upwelling", seadat$seascape_name)
+seadat$seascape_name
+
+seadat$seascape_name <- factor(seadat$seascape_name, levels = c("Temperate Blooms Upwelling", "Temperate Transition", "Other"))
+
+# mapdat2 <- mapdat %>% 
+#   group_by(lat_lon) %>% 
+#   summarise(sum_illegal = sum(illegal),
+#             lat = mean(lat1),
+#             lon = mean(lon1))
+
+mapdat
+
+
 
 # Correct 4/24/2019
 bat <- getNOAA.bathy(-68, -51, -51, -39, res = 1, keep = TRUE)
@@ -75,66 +146,85 @@ map1 <- ggmap(get_map(loc, zoom = 3, maptype='toner-background', color='bw', sou
 map1
 
 
-ggplot(NULL) + 
-  geom_tile(data = filter(mapdat2, sum_illegal > 0), aes(lon, lat, fill=sum_illegal), size=50) +
-  scale_fill_distiller(palette="Spectral", na.value="white") +
-  NULL
+# ggplot(NULL) + 
+#   geom_tile(data = filter(mapdat2, sum_illegal > 0), aes(lon, lat, fill=sum_illegal), size=50) +
+#   scale_fill_distiller(palette="Spectral", na.value="white") +
+#   NULL
+# 
 
-
-
+# ggplot(seadat, aes(lon, lat, color=factor(seascape_name))) + geom_point()
 
 map2 <- 
   autoplot(bat, geom = c("raster", "contour")) +
   geom_raster(aes(fill=z)) +
   geom_contour(aes(z = z), colour = "white", alpha = 0.05) +
+  # scale_fill_gradientn(values = scales::rescale(c(-6600, 30, 40, 1500)),
+  #                      colors = c("lightsteelblue4", "lightsteelblue2", "#C6E0FC", 
+  #                                 "grey50", "grey70", "grey85")) +
   scale_fill_gradientn(values = scales::rescale(c(-6600, 30, 40, 1500)),
-                       colors = c("lightsteelblue4", "lightsteelblue2", "#C6E0FC", 
+                       colors = c("#C6E0FC", "#C6E0FC", "#C6E0FC", 
                                   "grey50", "grey70", "grey85")) +
-  labs(x=NULL, y=NULL, color="Illegal \n Activity") +
-  geom_path(data = eez[order(eez$order), ], aes(x=lon, y=lat), linetype = "dashed", alpha = 0.5) +
-  geom_point(data = filter(mapdat2, sum_illegal > 1), aes(lon, lat, color=sum_illegal), shape=15) +
-  annotate("text", x=-64.25, y = -39.25, label="Patagonia Shelf, Argentina", size = 4, color='black', fontface=2) +
-  annotate("text", x=-65.25, y = -39.75, label="Total Illegal Activity", size = 4, color='black', fontface=2) +
-  annotate("text", x=-66.25, y = -40.25, label="2012-2016", size = 4, color='black', fontface=2) +
+  labs(x=NULL, y=NULL, color="Seascape") +
+  geom_point(data = seadat, aes(lon, lat, color=factor(seascape_name)), size=0.75) +
+  geom_point(data = filter(mapdat, illegal == 0), aes(lon1, lat1), color="black", size = 1) +
+  geom_point(data = filter(mapdat, illegal == 1), aes(lon1, lat1), color="red", size = 1) +
+  geom_path(data = eez[order(eez$order), ], aes(x=lon, y=lat), linetype = "dashed") +
+  annotate("text", x=-64, y = -39.25, label="Patagonia Shelf, Argentina", size = 3, color='black', fontface=2) +
+  annotate("text", x=-65.6, y = -39.75, label="March 13, 2016", size = 3, color='black', fontface=2) +
+  annotate("text", x=-66.75, y = -40.25, label="Illegal ", size = 3, fontface=2, color="red") +
+  annotate("text", x=-64, y = -40.25, label="/ Legal Vessel ", size = 3, fontface=2, color="black") +
   theme(axis.title.x=element_blank(),
         axis.text.x=element_blank(),
         axis.ticks.x=element_blank(),
         axis.title.y=element_blank(),
         axis.text.y=element_blank(),
         axis.ticks.y=element_blank(),
-        legend.direction = 'vertical',
+        legend.direction = 'horizontal',
         legend.justification = 'center',
-        legend.position = c(.93, 0.2),
-        legend.margin=margin(l = 0, unit='cm'),
-        legend.text = element_text(size=10),
-        legend.title = element_text(size=12),
-        legend.key = element_rect(fill = "transparent", colour = "transparent"),
-        legend.background = element_rect(fill = "transparent", colour = "transparent"),
+        legend.position = "bottom",
+        legend.key=element_blank(),
+        # legend.position = c(.93, 0.2),
+        # legend.margin=margin(l = 0, unit='cm'),
+        legend.text = element_text(size=8.5),
+        legend.title = element_text(size=9),
+        legend.background = element_blank(),
+        # legend.spacing.x = unit(0.30, 'cm'),
+        # legend.key.size = unit(0, 'lines'),
+        # legend.key.size = unit(0, "cm"),
+        legend.box.background = element_rect(colour = "black"),
+        # legend.key = element_rect(fill = "transparent", colour = "transparent"),
+        # legend.background = element_rect(fill = "transparent", colour = "transparent"),
         panel.grid = element_blank(),
         panel.border = element_rect(colour = "black", fill=NA, size=1)) +
-  scale_color_gradientn(colours=brewer.pal(9, "OrRd"), limits=c(0, 200)) +
-  
-  # Legend up top
   guides(fill = FALSE,
-         color = guide_colorbar(title.hjust = unit(1.1, 'cm'),
-                                title.position = "top",
-                                frame.colour = "black",
-                                barwidth = .5,
-                                barheight = 7,
-                                label.position = 'left')) +
+         color = guide_legend(title.position = "bottom",
+                              title.hjust = 0.5,
+                              override.aes=list(fill=NA, shape=15, size=5),
+                              keywidth=0.01,
+                              keyheight=0.01,
+                              default.unit="inch")) +
+                              
+                             # hjust = 0.5 centres the title horizontally
+                             # title.hjust = 0.5,
+                             #label.position = "top")
+                             
+  scale_color_manual(values = c("cornflowerblue", "blue", "#C6E0FC", "#C6E0FC")) +
+  # scale_color_gradientn(colours=brewer.pal(9, "OrRd"), limits=c(0, 200)) +
   # scale_y_continuous(expand=c(0,0)) +
   # scale_x_continuous(expand=c(0,0)) +
   NULL
 
 map2
+ggsave("~/Projects/predicting-illegal-fishing/figures/Figure1.png", width=5, height=5)
 
 
+ggdraw() + draw_plot(map2) 
 
-ggdraw() + draw_plot(map2, 0, 0, height = 1, width = 1) +
   draw_plot(map1, .025, .024, height = .26, width = .25)
 
 ggsave("~/Projects/predicting-illegal-fishing/figures/Figure1.pdf", width=5, height=5)
-
+ggsave("~/Projects/predicting-illegal-fishing/figures/Figure1.png", width=5, height=5)
+#
 
 
 
