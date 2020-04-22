@@ -15,6 +15,7 @@ import sklearn.metrics as metrics
 from sklearn.model_selection import RandomizedSearchCV, TimeSeriesSplit, GridSearchCV
 from collections import deque
 import calendar
+from sklearn.metrics import confusion_matrix
 
 # 8Day data
 dat = pd.read_feather('data/full_gfw_10d_effort_model_data_8DAY_2012-01-01_2016-12-26.feather')
@@ -125,6 +126,11 @@ for year in range(2012, 2017):
     
     # calculate precision-recall AUC
     auc_m = auc(recall, precision)
+
+    # Specificity = TN/(TN+FP)
+    tn, fp, fn, tp = confusion_matrix(y_test, y_pred).ravel()
+    specificity = tn / (tn+fp)
+    
     
     # Feature importance
     fea_import = pd.DataFrame({'variable': X_train.columns , 'importance': clf.feature_importances_, 'year': year})
@@ -133,8 +139,11 @@ for year in range(2012, 2017):
     # calculate average precision score
     ap = average_precision_score(y_test, proba)
     print('f1=%.3f auc=%.3f ap=%.3f' % (f1, auc_m, ap))
-    ddat = pd.DataFrame({'year': year, 'prec': precision, 'recall': recall, 'f1': f1, 'auc': auc_m, 'ap':ap})
+    ddat = pd.DataFrame({'year': year, 'prec': precision, 'recall': recall, 'f1': f1, 'auc': auc_m, 'ap':ap, 'spec': specificity, 'sens':sensitivity})
     sdat = pd.concat([sdat, ddat])
+
+
+
 
 
 # Save precision-recall data

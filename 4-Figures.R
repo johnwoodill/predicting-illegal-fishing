@@ -93,16 +93,27 @@ mapdat <- filter(mapdat, date == "2016-03-13")
 seadat <- filter(sea, date == "2016-03-13")
 seadat <- left_join(seadat, seascape_labels, by='seascape_class')
 
-seadat$seascape_name <- ifelse(seadat$seascape_class == 7 | seadat$seascape_class == 14, seadat$seascape_class, "Other")
+seadat$seascape_name <- ifelse(seadat$seascape_class == 7 
+                               | seadat$seascape_class == 14
+                               | seadat$seascape_class == 21
+                               | seadat$seascape_class == 15
+                               | seadat$seascape_class == 12, seadat$seascape_class, "Other")
 seadat <- drop_na(seadat)
 
-# seadat <- filter(seadat, seascape_class %in% c(7,14))
+seadat %>% group_by(seascape_name) %>% summarise(nn = n()) %>% arrange(-nn)
 
 seadat$seascape_name <- ifelse(seadat$seascape_name == 7, "Temperate Transition", seadat$seascape_name)
 seadat$seascape_name <- ifelse(seadat$seascape_name == 14, "Temperate Blooms Upwelling", seadat$seascape_name)
+seadat$seascape_name <- ifelse(seadat$seascape_name == 21, "Warm, Blooms, High Nuts", seadat$seascape_name)
+seadat$seascape_name <- ifelse(seadat$seascape_name == 15, "Tropical Seas", seadat$seascape_name)
+seadat$seascape_name <- ifelse(seadat$seascape_name == 12, "Subtropical Transition", seadat$seascape_name)
 seadat$seascape_name
 
-seadat$seascape_name <- factor(seadat$seascape_name, levels = c("Temperate Blooms Upwelling", "Temperate Transition", "Other"))
+seadat$seascape_name <- factor(seadat$seascape_name, levels = c("Temperate Blooms Upwelling", 
+                                                                "Temperate Transition", "Warm, Blooms, High Nuts",
+                                                                "Tropical Seas", "Subtropical Transition", "Other"))
+
+
 
 # mapdat2 <- mapdat %>% 
 #   group_by(lat_lon) %>% 
@@ -166,13 +177,13 @@ map2 <-
                                   "grey50", "grey70", "grey85")) +
   labs(x=NULL, y=NULL, color="Seascape") +
   geom_point(data = seadat, aes(lon, lat, color=factor(seascape_name)), size=0.75) +
+  geom_path(data = eez[order(eez$order), ], aes(x=lon, y=lat), linetype = "dashed", color="orange", size=0.75) +
   geom_point(data = filter(mapdat, illegal == 0), aes(lon1, lat1), color="black", size = 1) +
   geom_point(data = filter(mapdat, illegal == 1), aes(lon1, lat1), color="red", size = 1) +
-  geom_path(data = eez[order(eez$order), ], aes(x=lon, y=lat), linetype = "dashed") +
-  annotate("text", x=-64, y = -39.25, label="Patagonia Shelf, Argentina", size = 3, color='black', fontface=2) +
+  annotate("text", x=-63.9, y = -39.25, label="Patagonia Shelf, Argentina", size = 3, color='black', fontface=2) +
   annotate("text", x=-65.6, y = -39.75, label="March 13, 2016", size = 3, color='black', fontface=2) +
-  annotate("text", x=-66.75, y = -40.25, label="Illegal ", size = 3, fontface=2, color="red") +
-  annotate("text", x=-64, y = -40.25, label="/ Legal Vessel ", size = 3, fontface=2, color="black") +
+  annotate("text", x=-66.825, y = -40.25, label="Illegal ", size = 3, fontface=2, color="red") +
+  annotate("text", x=-64, y = -40.25, label=" / Legal Vessel ", size = 3, fontface=2, color="black") +
   theme(axis.title.x=element_blank(),
         axis.text.x=element_blank(),
         axis.ticks.x=element_blank(),
@@ -182,47 +193,41 @@ map2 <-
         legend.direction = 'horizontal',
         legend.justification = 'center',
         legend.position = "bottom",
-        legend.key=element_blank(),
-        # legend.position = c(.93, 0.2),
-        # legend.margin=margin(l = 0, unit='cm'),
-        #element_text(margin = margin(r = 10, unit = "pt"))
-        legend.text = element_text(size=8.5, margin = margin(r = 5, unit = "pt")),
-        # legend.text = element_text(size=8.5),
+        # legend.key=element_blank(),
+        legend.key.size = unit(10, "cm"),
+        legend.text = element_text(size=8.5, margin = margin(r = 14, unit = "pt")),
         legend.title = element_text(size=9),
         legend.background = element_blank(),
-        # legend.spacing.x = unit(0.30, 'cm'),
-        # legend.key.size = unit(0, 'lines'),
-        # legend.key.size = unit(0, "cm"),
         legend.box.background = element_rect(colour = "black"),
-        # legend.key = element_rect(fill = "transparent", colour = "transparent"),
-        # legend.background = element_rect(fill = "transparent", colour = "transparent"),
         panel.grid = element_blank(),
         panel.border = element_rect(colour = "black", fill=NA, size=1)) +
   guides(fill = FALSE,
          color = guide_legend(title.position = "bottom",
                               title.hjust = 0.5,
                               override.aes=list(fill=NA, shape=15, size=4),
-                              keywidth=0.01,
-                              keyheight=0.01,
-                              default.unit="inch")) +
+                              keywidth=0.025,
+                              keyheight=0.025,
+                              default.unit="inch",
+                              nrow = 3)) +
                               
                              # hjust = 0.5 centres the title horizontally
                              # title.hjust = 0.5,
                              #label.position = "top")
                              
-  scale_color_manual(values = c("cornflowerblue", "blue", "#C6E0FC", "#C6E0FC")) +
+  scale_color_manual(values = rev(brewer.pal(9, "Blues")[3:9])) +
+  # scale_color_manual(values = c("cornflowerblue", "deepskyblue", "deepskyblue4", "darkblue", "#C6E0FC", "#C6E0FC")) +
+  
   # scale_color_gradientn(colours=brewer.pal(9, "OrRd"), limits=c(0, 200)) +
   # scale_y_continuous(expand=c(0,0)) +
   # scale_x_continuous(expand=c(0,0)) +
   NULL
 
-map2
-ggsave("~/Projects/predicting-illegal-fishing/figures/Figure1.png", width=5, height=5)
+# map2
 
+# Draw plot
+ggdraw() + draw_plot(map2) + draw_plot(map1, .64, .21, height = .26, width = .25)
 
-ggdraw() + draw_plot(map2) + draw_plot(map1, .67, .147, height = .26, width = .25)
-
-#ggsave("~/Projects/predicting-illegal-fishing/figures/Figure1.pdf", width=5, height=5)
+# Save both plots
 ggsave("~/Projects/predicting-illegal-fishing/figures/Figure1.png", width=5, height=5)
 #
 
@@ -311,6 +316,8 @@ coord_radar <- function (theta = "x", start = 0, direction = 1) {
 }
 
 fea <- read_feather('~/Projects/predicting-illegal-fishing/data/feature_importance_rf_illegal.feather')
+fea_ocean <- read_csv('~/Projects/predicting-illegal-fishing/data/feature_importance_oceandata_rf_illegal.csv')
+
 
 fea_dat <- data.frame("variable" = c("distance_to_eez_km", "eez", "coast_dist_km", "lon1", "port_dist_km", "lat1",
                                    "sst", "chlor_a", "fishing_hours", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul",
@@ -321,7 +328,7 @@ fea_dat <- data.frame("variable" = c("distance_to_eez_km", "eez", "coast_dist_km
                                    , "seascape_20.0", "seascape_21.0", "seascape_22.0", "seascape_23.0", "seascape_24.0"
                                    , "seascape_25.0", "seascape_26.0", "seascape_27.0", "seascape_28.0", "seascape_29.0"
                                    , "seascape_30.0", "seascape_31.0", "seascape_32.0", "seascape_33.0", "seascape_34.0"),
-                      "labels" = c("Distance to EEZ", "EEZ", "Distance to Coast", "Longitude", "Distance to Port", "Latitude",
+                      "labels" = c("Distance to EEZ", "I-EEZ", "Distance to Coast", "Longitude", "Distance to Port", "Latitude",
                                    "Sea Surface Temp.", "Chlorophyll", "Fishing Hours", "January", "February", "March", "April",
                                    "May", "June", "July", "August", "September", "October", "November", "December", "Seascape 1", "Seascape 2", "Seascape 3", "Seascape 4"
                                    , "Seascape 5", "Seascape 6", "Seascape 7", "Seascape 8", "Seascape 9"
@@ -342,12 +349,14 @@ fea <- fea %>%
   ungroup()
 
 
-fead <- fead %>% group_by(year) %>% 
+fead <- fea %>% 
+  group_by(year) %>% 
   arrange(labels, year) %>% 
   ungroup()
 fead
 
-ggplot(fead, aes(x=labels, y=importance, color=factor(year), group=factor(year))) + 
+
+rp1 <- ggplot(fead, aes(x=labels, y=importance, color=factor(year), group=factor(year))) + 
   geom_polygon(fill=NA) +
   labs(y=NULL, x=NULL, color=NULL) + 
   geom_point(size = 1) +
@@ -355,7 +364,8 @@ ggplot(fead, aes(x=labels, y=importance, color=factor(year), group=factor(year))
   guides(color = guide_legend(keywidth = 1, keyheight = 1,
                        override.aes = list(size = .5, shape = NA))) +
   theme(panel.grid.major = element_line(colour = "grey"), 
-        legend.position = c(.9, 0.15),
+        # legend.position = c(.9, 0.15),
+        legend.position = "none",
         axis.text.y = element_blank(),
         axis.ticks.y = element_blank()) +
   coord_radar() +
@@ -367,13 +377,53 @@ ggplot(fead, aes(x=labels, y=importance, color=factor(year), group=factor(year))
   NULL
   
 
-  
-
-ggsave("~/Projects/predicting-illegal-fishing/figures/Figure4.png", width = 5, height = 4.5)
-
+fea_ocean <- left_join(fea_ocean, fea_dat, by = "variable")
+fea_ocean <- dplyr::select(fea_ocean, labels, importance, year)
 
 
+# Get top five from each  year
+fea_ocean2 <- fea_ocean %>% 
+  group_by(labels) %>%
+  summarise(importance = mean(importance)) %>% 
+  arrange(-importance) %>% 
+  do(head(., n = 5)) %>% 
+  ungroup()
 
+top_ocean <- fea_ocean2$labels
+
+fead <- fea_ocean %>%
+  filter(labels %in% top_ocean) %>% 
+  group_by(year) %>% 
+  arrange(labels, year) %>% 
+  ungroup()
+
+fead$labels <- factor(fead$labels, levels=c("Chlorophyll", "February","Seascape 14", "January", "Sea Surface Temp."))
+
+
+rp2 <- ggplot(fead, aes(x=labels, y=importance, color=factor(year), group=factor(year))) + 
+  geom_polygon(fill=NA) +
+  labs(y=NULL, x=NULL, color=NULL) + 
+  geom_point(size = 1) +
+  theme_bw(12) +
+  guides(color = guide_legend(keywidth = 1, keyheight = 1,
+                       override.aes = list(size = .5, shape = NA))) +
+  theme(panel.grid.major = element_line(colour = "grey"), 
+        legend.position = c(.9, 0.15),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank()) +
+  # scale_x_discrete(expand = c(0, 0)) +
+  coord_radar() +
+  annotate("text", x=.5, y=0.50, label = "0.50", color='darkgrey',vjust=-.45) +
+  annotate("text", x=.5, y=0.40, label = "0.40", color='darkgrey',vjust=-.45) +
+  annotate("text", x=.5, y=0.30, label = "0.30", color='darkgrey',vjust=-.45) + 
+  annotate("text", x=.5, y=0.20, label = "0.20", color='darkgrey',vjust=-.45) + 
+  annotate("text", x=.5, y=0.10, label = "0.10", color='darkgrey',vjust=-.45) +
+  NULL
+
+
+plot_grid(rp1, rp2, ncol=2, labels = c("A", "B"))
+
+ggsave("~/Projects/predicting-illegal-fishing/figures/Figure4.png", width = 10, height = 4.5)
 
 # Figure 5. Movement from legal to illegal seascape
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -442,11 +492,11 @@ p1 <- autoplot.bathy(bat, geom = c("contour", "raster"), coast=TRUE, show.legend
   geom_raster(aes(fill=z), show.legend = FALSE) +
   geom_contour(aes(z = z), color = "white", alpha = 0.01, show.legend = FALSE) +
   scale_fill_gradientn(values = scales::rescale(c(-6600, 0, 39, 1500)),
-                       colors = c("lightsteelblue4", "lightsteelblue2", "#C6E0FC", "grey50", "grey80")) +
+                       colors = c("lightsteelblue2", "lightsteelblue2", "#C6E0FC", "grey50", "grey80")) +
   geom_point(data = NULL, aes(x=-67.65, y = -40.05, shape=factor("temp_bloom")), size = 2, shape = 19, color="cornflowerblue") +
   geom_point(data=sdat, aes(x=lon, y=lat, color=factor(seascape_class)), color="cornflowerblue", size = 0.5) +
+  geom_path(data = eez[order(eez$order), ], aes(x=lon, y=lat), linetype = "dashed", color="orange", size=0.75) +
   geom_point(data=ildat, aes(lon1, lat1, color=factor(illegal)), size=0.5) +
-  geom_path(data = eez[order(eez$order), ], aes(x=lon, y=lat), linetype = "dashed", alpha = 0.5) +
   labs(x=NULL, y=NULL) +
   annotate("text", x=-66, y = -39.25, label=date_, size = 4, color='black', fontface=2) +
   annotate("text", x=-65.1, y = -39.65, label="# Illegal Vessels = 76", size = 4, color='black', fontface=2) +
@@ -471,7 +521,7 @@ p1 <- autoplot.bathy(bat, geom = c("contour", "raster"), coast=TRUE, show.legend
   annotate("segment", x=-Inf, xend=Inf, y=Inf, yend=Inf, color = "black", size=1) + # Top
   scale_color_manual(values = c("Legal" = "black", "Illegal" = "red", "Temperate Blooms Upwelling" = "cornflowerblue")) +
   NULL
-#p1
+# p1
 
 # ggsave("~/Projects/predicting-illegal-fishing/figures/Figure6a.pdf", width=5, height = 5)
 
@@ -487,11 +537,11 @@ p2 <- autoplot.bathy(bat, geom = c("contour", "raster"), coast=TRUE, show.legend
   geom_raster(aes(fill=z), show.legend = FALSE) +
   geom_contour(aes(z = z), color = "white", alpha = 0.01, show.legend = FALSE) +
   scale_fill_gradientn(values = scales::rescale(c(-6600, 0, 39, 1500)),
-                       colors = c("lightsteelblue4", "lightsteelblue2", "#C6E0FC", "grey50", "grey80")) +
+                       colors = c("lightsteelblue2", "lightsteelblue2", "#C6E0FC", "grey50", "grey80")) +
   
   geom_point(data=sdat, aes(x=lon, y=lat, color=factor(seascape_class)), color="cornflowerblue", size = 0.5) +
+  geom_path(data = eez[order(eez$order), ], aes(x=lon, y=lat), linetype = "dashed", color="orange", size=0.75) +
   geom_point(data=ildat, aes(lon1, lat1, color=factor(illegal)), size=0.5) +
-  geom_path(data = eez[order(eez$order), ], aes(x=lon, y=lat), linetype = "dashed", alpha = 0.5) +
   labs(x=NULL, y=NULL) +
   geom_point(data = NULL, aes(x=-67.65, y = -40.05, shape=factor("temp_bloom")), size = 2, shape = 19, color="cornflowerblue") +
   annotate("text", x=-66, y = -39.25, label=date_, size = 4, color='black', fontface=2) +
@@ -546,7 +596,7 @@ mdat10km <- read_feather('~/Projects/predicting-illegal-fishing/data/illegal_10k
 # 2km Cross-validation results
 
 # Figure ***
-mdat2km$year_label <- paste0(mdat2km$year, " - F1: ", round(mdat2km$f1, 2), " AUC: ", round(mdat2km$auc, 2), " AP: ", round(mdat2km$ap, 2))
+mdat2km$year_label <- paste0(mdat2km$year, " - F1: ", round(mdat2km$f1, 2), " AUC: ", round(mdat2km$auc, 2), " AP: ", round(mdat2km$ap, 2), "               ")
 
 # Custom color palette
 cbp1 <- c("#999999", "#E69F00", "#56B4E9", "#009E73",
@@ -560,15 +610,18 @@ p1 <- ggplot(mdat2km, aes(recall, prec, color=factor(year_label))) +
   geom_line() +
   theme(legend.background = element_rect(colour = 'grey', fill = 'white', linetype='solid'),
         # legend.position = c(.310, .25),
-        legend.position = c(.28, .40),
+        # legend.position = c(.28, .40),
+        
+        legend.position = "bottom",
         legend.direction = 'vertical',
         legend.justification = 'center',
         legend.title.align = 0.5,
         legend.text = element_text(size=7),
-        legend.title = element_text(size=8),
+        legend.title = element_text(size=7),
         plot.title = element_text(hjust = 0.5),
-        legend.margin = margin(5, 25, 3, 3),
+        # legend.margin = margin(5, 25, 3, 3),
         panel.border = element_rect(colour = "black", fill=NA, size=1)) +
+  guides(color = guide_legend(nrow = 3)) +
   NULL
 p1
 
@@ -580,7 +633,7 @@ p1
 # 5km Cross-validation results
 
 # Figure ***
-mdat5km$year_label <- paste0(mdat5km$year, " - F1: ", round(mdat5km$f1, 2), " AUC: ", round(mdat5km$auc, 2), " AP: ", round(mdat5km$ap, 2))
+mdat5km$year_label <- paste0(mdat5km$year, " - F1: ", round(mdat5km$f1, 2), " AUC: ", round(mdat5km$auc, 2), " AP: ", round(mdat5km$ap, 2), "               ")
 
 # Custom color palette
 cbp1 <- c("#999999", "#E69F00", "#56B4E9", "#009E73",
@@ -594,14 +647,18 @@ p2 <- ggplot(mdat5km, aes(recall, prec, color=factor(year_label))) +
   geom_line() +
   theme(legend.background = element_rect(colour = 'grey', fill = 'white', linetype='solid'),
         # legend.position = c(.310, .25),
-        legend.position = c(.28, .40),
+        # legend.position = c(.28, .40),
+        
+        legend.position = "bottom",
         legend.direction = 'vertical',
+        legend.justification = 'center',
         legend.title.align = 0.5,
         legend.text = element_text(size=7),
-        legend.title = element_text(size=8),
+        legend.title = element_text(size=7),
         plot.title = element_text(hjust = 0.5),
-        legend.margin = margin(5, 25, 3, 3),
+        # legend.margin = margin(5, 25, 3, 3),
         panel.border = element_rect(colour = "black", fill=NA, size=1)) +
+    guides(color = guide_legend(nrow = 3)) +
   NULL
 p2
 
@@ -614,7 +671,7 @@ p2
 # 10km Cross-validation results
 
 # Figure ***
-mdat10km$year_label <- paste0(mdat10km$year, " - F1: ", round(mdat10km$f1, 2), " AUC: ", round(mdat10km$auc, 2), " AP: ", round(mdat10km$ap, 2))
+mdat10km$year_label <- paste0(mdat10km$year, " - F1: ", round(mdat10km$f1, 2), " AUC: ", round(mdat10km$auc, 2), " AP: ", round(mdat10km$ap, 2), "               ")
 
 # Custom color palette
 cbp1 <- c("#999999", "#E69F00", "#56B4E9", "#009E73",
@@ -627,15 +684,18 @@ p3 <- ggplot(mdat10km, aes(recall, prec, color=factor(year_label))) +
   geom_line() +
   theme(legend.background = element_rect(colour = 'grey', fill = 'white', linetype='solid'),
         # legend.position = c(.310, .25),
-        legend.position = c(.28, .40),
+        # legend.position = c(.28, .40),
+        
+        legend.position = "bottom",
         legend.direction = 'vertical',
         legend.justification = 'center',
         legend.title.align = 0.5,
         legend.text = element_text(size=7),
-        legend.title = element_text(size=8),
+        legend.title = element_text(size=7),
         plot.title = element_text(hjust = 0.5),
-        legend.margin = margin(5, 25, 3, 3),
+        # legend.margin = margin(5, 25, 3, 3),
         panel.border = element_rect(colour = "black", fill=NA, size=1)) +
+    guides(color = guide_legend(nrow = 3)) +
   NULL
 p3
 
@@ -648,7 +708,7 @@ p3
 # Top five variables
 
 # Figure ***
-mdattop5$year_label <- paste0(mdattop5$year, " - F1: ", round(mdattop5$f1, 2), " AUC: ", round(mdattop5$auc, 2), " AP: ", round(mdattop5$ap, 2))
+mdattop5$year_label <- paste0(mdattop5$year, " - F1: ", round(mdattop5$f1, 2), " AUC: ", round(mdattop5$auc, 2), " AP: ", round(mdattop5$ap, 2), "               ")
 
 # Custom color palette
 cbp1 <- c("#999999", "#E69F00", "#56B4E9", "#009E73",
@@ -661,15 +721,18 @@ p4 <- ggplot(mdattop5, aes(recall, prec, color=factor(year_label))) +
   geom_line() +
   theme(legend.background = element_rect(colour = 'grey', fill = 'white', linetype='solid'),
         # legend.position = c(.310, .25),
-        legend.position = c(.28, .40),
+        # legend.position = c(.28, .40),
+        
+        legend.position = "bottom",
         legend.direction = 'vertical',
         legend.justification = 'center',
         legend.title.align = 0.5,
         legend.text = element_text(size=7),
-        legend.title = element_text(size=8),
+        legend.title = element_text(size=7),
         plot.title = element_text(hjust = 0.5),
-        legend.margin = margin(5, 25, 3, 3),
+        # legend.margin = margin(5, 25, 3, 3),
         panel.border = element_rect(colour = "black", fill=NA, size=1)) +
+    guides(color = guide_legend(nrow = 3)) +
   NULL
 p4
 
@@ -679,7 +742,7 @@ p4
 # Bio model 
 
 # Figure ***
-mdatbio$year_label <- paste0(mdatbio$year, " - F1: ", round(mdatbio$f1, 2), " AUC: ", round(mdatbio$auc, 2), " AP: ", round(mdatbio$ap, 2))
+mdatbio$year_label <- paste0(mdatbio$year, " - F1: ", round(mdatbio$f1, 2), " AUC: ", round(mdatbio$auc, 2), " AP: ", round(mdatbio$ap, 2), "               ")
 
 # Custom color palette
 cbp1 <- c("#999999", "#E69F00", "#56B4E9", "#009E73",
@@ -691,26 +754,28 @@ p5 <- ggplot(mdatbio, aes(recall, prec, color=factor(year_label))) +
   scale_color_manual(values = viridis(6, option = "D")) +
   geom_line() +
   theme(legend.background = element_rect(colour = 'grey', fill = 'white', linetype='solid'),
-        legend.position = c(.28, .40),
+        # legend.position = c(.310, .25),
+        # legend.position = c(.28, .40),
+        
+        legend.position = "bottom",
         legend.direction = 'vertical',
         legend.justification = 'center',
         legend.title.align = 0.5,
         legend.text = element_text(size=7),
-        legend.title = element_text(size=8),
+        legend.title = element_text(size=7),
         plot.title = element_text(hjust = 0.5),
-        legend.margin = margin(5, 25, 3, 3),
+        # legend.margin = margin(5, 25, 3, 3),
         panel.border = element_rect(colour = "black", fill=NA, size=1)) +
+    guides(color = guide_legend(nrow = 3)) +
   NULL
 p5
 
 
+plot_grid(p4, p5, p1, p2, p3, ncol=2, labels = c("A", "B", "C", "D", "E"))
 
+# plot_grid(p1, p1, p1, p1, p1, ncol=2, labels = c("A", "B", "C", "D", "E"))
 
-
-
-plot_grid(p4, p5, p1, p2, p3, ncol=2, labels = c("(A)", "(B)", "(C)", "(D)", "(E)"), label_x = .88, label_y = .98)
-
-ggsave("~/Projects/predicting-illegal-fishing/figures/Figure7.png", width = 10, height = 8, dpi=300)
+ggsave("~/Projects/predicting-illegal-fishing/figures/Figure7_test.png", width = 10, height = 15, dpi=300)
 
 
 
