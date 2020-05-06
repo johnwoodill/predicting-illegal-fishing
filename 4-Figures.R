@@ -277,7 +277,7 @@ ggsave("~/Projects/predicting-illegal-fishing/figures/Figure2.png", width=5, hei
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 mdat <- read_feather('~/Projects/predicting-illegal-fishing/data/illegal_cross_val_dat.feather')
 
-mdat$year_label <- paste0(mdat$year, " - F1: ", round(mdat$f1, 2), " AUC: ", round(mdat$auc, 2), " AP: ", round(mdat$ap, 2))
+mdat$year_label <- paste0(mdat$year, " - F1: ", round(mdat$f1, 2), " AP: ", round(mdat$ap, 2), " AR: ", round(mdat$bas, 2), " AUC: ", round(mdat$auc, 2))
 
 # Custom color palette
 cbp1 <- c("#999999", "#E69F00", "#56B4E9", "#009E73",
@@ -289,7 +289,7 @@ ggplot(mdat, aes(recall, prec, color=factor(year_label))) +
   scale_color_manual(values = viridis(6, option = "D")) +
   geom_line() +
   theme(legend.background = element_rect(colour = 'grey', fill = 'white', linetype='solid'),
-        legend.position = c(.25, .24),
+        legend.position = c(.30, .24),
         legend.direction = 'vertical',
         legend.justification = 'center',
         legend.text = element_text(size=8),
@@ -596,7 +596,7 @@ mdat10km <- read_feather('~/Projects/predicting-illegal-fishing/data/illegal_10k
 # 2km Cross-validation results
 
 # Figure ***
-mdat2km$year_label <- paste0(mdat2km$year, " - F1: ", round(mdat2km$f1, 2), " AUC: ", round(mdat2km$auc, 2), " AP: ", round(mdat2km$ap, 2), "               ")
+mdat2km$year_label <- paste0(mdat2km$year, " - F1: ", format(round(mdat2km$f1, 2), nsmall = 2), "  AP: ", format(round(mdat2km$ap, 2), nsmall=2), "  AR: ", format(round(mdat2km$bas, 2), nsmall=2), "  AUC: ", format(round(mdat2km$auc, 2), nsmall=2), "                    ")
 
 # Custom color palette
 cbp1 <- c("#999999", "#E69F00", "#56B4E9", "#009E73",
@@ -616,12 +616,12 @@ p1 <- ggplot(mdat2km, aes(recall, prec, color=factor(year_label))) +
         legend.direction = 'vertical',
         legend.justification = 'center',
         legend.title.align = 0.5,
-        legend.text = element_text(size=7),
-        legend.title = element_text(size=7),
+        legend.text = element_text(size=10),
+        legend.title = element_text(size=10),
         plot.title = element_text(hjust = 0.5),
         # legend.margin = margin(5, 25, 3, 3),
         panel.border = element_rect(colour = "black", fill=NA, size=1)) +
-  guides(color = guide_legend(nrow = 3)) +
+    guides(color = guide_legend(nrow = 5)) +
   NULL
 p1
 
@@ -633,7 +633,7 @@ p1
 # 5km Cross-validation results
 
 # Figure ***
-mdat5km$year_label <- paste0(mdat5km$year, " - F1: ", round(mdat5km$f1, 2), " AUC: ", round(mdat5km$auc, 2), " AP: ", round(mdat5km$ap, 2), "               ")
+mdat5km$year_label <- paste0(mdat5km$year, " - F1: ", format(round(mdat5km$f1, 2), nsmall = 2), "  AP: ", format(round(mdat5km$ap, 2), nsmall=2), "  AR: ", format(round(mdat5km$bas, 2), nsmall=2), "  AUC: ", format(round(mdat5km$auc, 2), nsmall=2), "                    ")
 
 # Custom color palette
 cbp1 <- c("#999999", "#E69F00", "#56B4E9", "#009E73",
@@ -653,12 +653,12 @@ p2 <- ggplot(mdat5km, aes(recall, prec, color=factor(year_label))) +
         legend.direction = 'vertical',
         legend.justification = 'center',
         legend.title.align = 0.5,
-        legend.text = element_text(size=7),
-        legend.title = element_text(size=7),
+        legend.text = element_text(size=10),
+        legend.title = element_text(size=10),
         plot.title = element_text(hjust = 0.5),
         # legend.margin = margin(5, 25, 3, 3),
         panel.border = element_rect(colour = "black", fill=NA, size=1)) +
-    guides(color = guide_legend(nrow = 3)) +
+    guides(color = guide_legend(nrow = 5)) +
   NULL
 p2
 
@@ -671,7 +671,7 @@ p2
 # 10km Cross-validation results
 
 # Figure ***
-mdat10km$year_label <- paste0(mdat10km$year, " - F1: ", round(mdat10km$f1, 2), " AUC: ", round(mdat10km$auc, 2), " AP: ", round(mdat10km$ap, 2), "               ")
+mdat10km$year_label <- paste0(mdat10km$year, " - F1: ", format(round(mdat10km$f1, 2), nsmall = 2), "  AP: ", format(round(mdat10km$ap, 2), nsmall=2), "  AR: ", format(round(mdat10km$bas, 2), nsmall=2), "  AUC: ", format(round(mdat10km$auc, 2), nsmall=2), "                    ")
 
 # Custom color palette
 cbp1 <- c("#999999", "#E69F00", "#56B4E9", "#009E73",
@@ -690,12 +690,12 @@ p3 <- ggplot(mdat10km, aes(recall, prec, color=factor(year_label))) +
         legend.direction = 'vertical',
         legend.justification = 'center',
         legend.title.align = 0.5,
-        legend.text = element_text(size=7),
-        legend.title = element_text(size=7),
+        legend.text = element_text(size=10),
+        legend.title = element_text(size=10),
         plot.title = element_text(hjust = 0.5),
         # legend.margin = margin(5, 25, 3, 3),
         panel.border = element_rect(colour = "black", fill=NA, size=1)) +
-    guides(color = guide_legend(nrow = 3)) +
+    guides(color = guide_legend(nrow = 4)) +
   NULL
 p3
 
@@ -708,7 +708,7 @@ p3
 # Top five variables
 
 # Figure ***
-mdattop5$year_label <- paste0(mdattop5$year, " - F1: ", round(mdattop5$f1, 2), " AUC: ", round(mdattop5$auc, 2), " AP: ", round(mdattop5$ap, 2), "               ")
+mdattop5$year_label <- paste0(mdattop5$year, " - F1: ", format(round(mdattop5$f1, 2), nsmall = 2), "  AP: ", format(round(mdattop5$ap, 2), nsmall=2), "  AR: ", format(round(mdattop5$bas, 2), nsmall=2), "  AUC: ", format(round(mdattop5$auc, 2), nsmall=2), "                    ")
 
 # Custom color palette
 cbp1 <- c("#999999", "#E69F00", "#56B4E9", "#009E73",
@@ -727,12 +727,12 @@ p4 <- ggplot(mdattop5, aes(recall, prec, color=factor(year_label))) +
         legend.direction = 'vertical',
         legend.justification = 'center',
         legend.title.align = 0.5,
-        legend.text = element_text(size=7),
-        legend.title = element_text(size=7),
+        legend.text = element_text(size=10),
+        legend.title = element_text(size=10),
         plot.title = element_text(hjust = 0.5),
         # legend.margin = margin(5, 25, 3, 3),
         panel.border = element_rect(colour = "black", fill=NA, size=1)) +
-    guides(color = guide_legend(nrow = 3)) +
+    guides(color = guide_legend(nrow = 5)) +
   NULL
 p4
 
@@ -742,7 +742,7 @@ p4
 # Bio model 
 
 # Figure ***
-mdatbio$year_label <- paste0(mdatbio$year, " - F1: ", round(mdatbio$f1, 2), " AUC: ", round(mdatbio$auc, 2), " AP: ", round(mdatbio$ap, 2), "               ")
+mdatbio$year_label <- paste0(mdatbio$year, " - F1: ", format(round(mdatbio$f1, 2), nsmall = 2), "  AP: ", format(round(mdatbio$ap, 2), nsmall=2), "  AR: ", format(round(mdatbio$bas, 2), nsmall=2), "  AUC: ", format(round(mdatbio$auc, 2), nsmall=2), "                    ")
 
 # Custom color palette
 cbp1 <- c("#999999", "#E69F00", "#56B4E9", "#009E73",
@@ -761,12 +761,12 @@ p5 <- ggplot(mdatbio, aes(recall, prec, color=factor(year_label))) +
         legend.direction = 'vertical',
         legend.justification = 'center',
         legend.title.align = 0.5,
-        legend.text = element_text(size=7),
-        legend.title = element_text(size=7),
+        legend.text = element_text(size=10),
+        legend.title = element_text(size=10),
         plot.title = element_text(hjust = 0.5),
         # legend.margin = margin(5, 25, 3, 3),
         panel.border = element_rect(colour = "black", fill=NA, size=1)) +
-    guides(color = guide_legend(nrow = 3)) +
+    guides(color = guide_legend(nrow = 5)) +
   NULL
 p5
 
@@ -775,7 +775,7 @@ plot_grid(p4, p5, p1, p2, p3, ncol=2, labels = c("A", "B", "C", "D", "E"))
 
 # plot_grid(p1, p1, p1, p1, p1, ncol=2, labels = c("A", "B", "C", "D", "E"))
 
-ggsave("~/Projects/predicting-illegal-fishing/figures/Figure7_test.png", width = 10, height = 15, dpi=300)
+ggsave("~/Projects/predicting-illegal-fishing/figures/Figure7.png", width = 10, height = 15, dpi=300)
 
 
 

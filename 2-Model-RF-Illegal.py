@@ -15,7 +15,8 @@ import sklearn.metrics as metrics
 from sklearn.model_selection import RandomizedSearchCV, TimeSeriesSplit, GridSearchCV
 from collections import deque
 import calendar
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import confusion_matrix, balanced_accuracy_score
+
 
 # 8Day data
 dat = pd.read_feather('data/full_gfw_10d_effort_model_data_8DAY_2012-01-01_2016-12-26.feather')
@@ -136,15 +137,17 @@ for year in range(2012, 2017):
     fea_import = pd.DataFrame({'variable': X_train.columns , 'importance': clf.feature_importances_, 'year': year})
     feadat = pd.concat([feadat, fea_import])
     
+    bas = balanced_accuracy_score(y_test, y_pred)
+    bas_t = balanced_accuracy_score(y_test, y_pred, adjusted=True)
+
     # calculate average precision score
     ap = average_precision_score(y_test, proba)
     print('f1=%.3f auc=%.3f ap=%.3f' % (f1, auc_m, ap))
-    ddat = pd.DataFrame({'year': year, 'prec': precision, 'recall': recall, 'f1': f1, 'auc': auc_m, 'ap':ap, 'spec': specificity, 'sens':sensitivity})
+    ddat = pd.DataFrame({'year': year, 'prec': precision, 'recall': recall, 'f1': f1, 'auc': auc_m, 'ap':ap, 'spec': specificity, 'bas': bas, 'bas_t': bas_t})
     sdat = pd.concat([sdat, ddat])
 
 
-
-
+sdat.groupby('year').mean()
 
 # Save precision-recall data
 sdat = sdat.reset_index(drop=True)

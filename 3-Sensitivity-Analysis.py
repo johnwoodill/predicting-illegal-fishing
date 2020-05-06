@@ -15,7 +15,7 @@ import sklearn.metrics as metrics
 from sklearn.model_selection import RandomizedSearchCV, TimeSeriesSplit, GridSearchCV
 from collections import deque
 import calendar
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import confusion_matrix, balanced_accuracy_score
 
 #Fully processed data
 # dat.to_feather('data/full_gfw_10d_illegal_model_data_DAILY_2012-01-01_2016-12-31.feather')
@@ -143,14 +143,18 @@ for year in range(2012, 2017):
     tn, fp, fn, tp = confusion_matrix(y_test, y_pred).ravel()
     specificity = tn / (tn+fp)
     
+    
     # Feature importance
     fea_import = pd.DataFrame({'variable': X_train.columns , 'importance': clf.feature_importances_, 'year': year})
     feadat = pd.concat([feadat, fea_import])
     
+    bas = balanced_accuracy_score(y_test, y_pred)
+    bas_t = balanced_accuracy_score(y_test, y_pred, adjusted=True)
+
     # calculate average precision score
     ap = average_precision_score(y_test, proba)
     print('f1=%.3f auc=%.3f ap=%.3f' % (f1, auc_m, ap))
-    ddat = pd.DataFrame({'year': year, 'prec': precision, 'recall': recall, 'f1': f1, 'auc': auc_m, 'ap':ap, 'spec': specificity, 'sens':sensitivity})
+    ddat = pd.DataFrame({'year': year, 'prec': precision, 'recall': recall, 'f1': f1, 'auc': auc_m, 'ap':ap, 'spec': specificity, 'bas': bas, 'bas_t': bas_t})
     sdat = pd.concat([sdat, ddat])
 
 
@@ -248,13 +252,16 @@ for year in range(2012, 2017):
     fea_import = pd.DataFrame({'variable': X_train.columns , 'importance': clf.feature_importances_, 'year': year})
     feadat = pd.concat([feadat, fea_import])
     
+    bas = balanced_accuracy_score(y_test, y_pred)
+    bas_t = balanced_accuracy_score(y_test, y_pred, adjusted=True)
+
     # calculate average precision score
     ap = average_precision_score(y_test, proba)
     print('f1=%.3f auc=%.3f ap=%.3f' % (f1, auc_m, ap))
-    ddat = pd.DataFrame({'year': year, 'prec': precision, 'recall': recall, 'f1': f1, 'auc': auc_m, 'ap':ap, 'spec': specificity, 'sens':sensitivity})
+    ddat = pd.DataFrame({'year': year, 'prec': precision, 'recall': recall, 'f1': f1, 'auc': auc_m, 'ap':ap, 'spec': specificity, 'bas': bas, 'bas_t': bas_t})
     sdat = pd.concat([sdat, ddat])
 
-
+sdat.groupby('year').mean()
 
 # Save precision-recall data
 sdat = sdat.reset_index(drop=True)
@@ -341,13 +348,22 @@ for year in range(2012, 2017):
     # Specificity = TN/(TN+FP)
     tn, fp, fn, tp = confusion_matrix(y_test, y_pred).ravel()
     specificity = tn / (tn+fp)
-  
+    
+    
+    # Feature importance
+    fea_import = pd.DataFrame({'variable': X_train.columns , 'importance': clf.feature_importances_, 'year': year})
+    feadat = pd.concat([feadat, fea_import])
+    
+    bas = balanced_accuracy_score(y_test, y_pred)
+    bas_t = balanced_accuracy_score(y_test, y_pred, adjusted=True)
+
     # calculate average precision score
     ap = average_precision_score(y_test, proba)
     print('f1=%.3f auc=%.3f ap=%.3f' % (f1, auc_m, ap))
-    ddat = pd.DataFrame({'year': year, 'prec': precision, 'recall': recall, 'f1': f1, 'auc': auc_m, 'ap':ap, 'spec': specificity, 'sens':sensitivity})
+    ddat = pd.DataFrame({'year': year, 'prec': precision, 'recall': recall, 'f1': f1, 'auc': auc_m, 'ap':ap, 'spec': specificity, 'bas': bas, 'bas_t': bas_t})
     sdat = pd.concat([sdat, ddat])
 
+sdat.groupby('year').mean()
 
 # Save precision-recall data
 sdat = sdat.reset_index(drop=True)
@@ -436,12 +452,21 @@ for year in range(2012, 2017):
     # Specificity = TN/(TN+FP)
     tn, fp, fn, tp = confusion_matrix(y_test, y_pred).ravel()
     specificity = tn / (tn+fp)
+        
+    # Feature importance
+    fea_import = pd.DataFrame({'variable': X_train.columns , 'importance': clf.feature_importances_, 'year': year})
+    feadat = pd.concat([feadat, fea_import])
     
+    bas = balanced_accuracy_score(y_test, y_pred)
+    bas_t = balanced_accuracy_score(y_test, y_pred, adjusted=True)
+
     # calculate average precision score
     ap = average_precision_score(y_test, proba)
     print('f1=%.3f auc=%.3f ap=%.3f' % (f1, auc_m, ap))
-    ddat = pd.DataFrame({'year': year, 'prec': precision, 'recall': recall, 'f1': f1, 'auc': auc_m, 'ap':ap, 'spec': specificity, 'sens':sensitivity})
+    ddat = pd.DataFrame({'year': year, 'prec': precision, 'recall': recall, 'f1': f1, 'auc': auc_m, 'ap':ap, 'spec': specificity, 'bas': bas, 'bas_t': bas_t})
     sdat = pd.concat([sdat, ddat])
+
+sdat.groupby('year').mean()
 
 # Save precision-recall data
 sdat = sdat.reset_index(drop=True)
@@ -509,41 +534,53 @@ for year in range(2012, 2017):
     #clf = LogisticRegression().fit(X_train, y_train)
     clf = RandomForestClassifier(n_estimators=100, random_state=123).fit(X_train, y_train)
 
-    # Get predicted probabilities for sensitivity analysis
-    pred_proba = clf.predict_proba(X_test)
-    proba = pred_proba[:, 1]
+    try:
+        # Get predicted probabilities for sensitivity analysis
+        pred_proba = clf.predict_proba(X_test)
+        proba = pred_proba[:, 1]
 
-    # Get predictions and fishing hours
-    y_pred = clf.predict(X_test)
+        # Get predictions and fishing hours
+        y_pred = clf.predict(X_test)
 
+        # Precision-recall across thresholds
+        # Precision = tp / ( tp + fp )
+        # Recall = tn / ( tn + fp )
+        precision, recall, thresholds = precision_recall_curve(y_test, proba)
 
-    # Precision-recall across thresholds
-    # Precision = tp / ( tp + fp )
-    # Recall = tn / ( tn + fp )
-    precision, recall, thresholds = precision_recall_curve(y_test, proba)
+        # Test predictions
+        y_pred = clf.predict(X_test)
 
-    # Test predictions
-    y_pred = clf.predict(X_test)
+        # F1 score = 2 * precision * recall / precision + recall
+        f1 = f1_score(y_test, y_pred)
 
-    # F1 score = 2 * precision * recall / precision + recall
-    f1 = f1_score(y_test, y_pred)
+        # calculate precision-recall AUC
+        auc_m = auc(recall, precision)
 
-    # calculate precision-recall AUC
-    auc_m = auc(recall, precision)
+        # Specificity = TN/(TN+FP)
+        tn, fp, fn, tp = confusion_matrix(y_test, y_pred).ravel()
+        specificity = tn / (tn+fp)
+        
+        
+        # Feature importance
+        fea_import = pd.DataFrame({'variable': X_train.columns , 'importance': clf.feature_importances_, 'year': year})
+        feadat = pd.concat([feadat, fea_import])
+        
+        bas = balanced_accuracy_score(y_test, y_pred)
+        bas_t = balanced_accuracy_score(y_test, y_pred, adjusted=True)
 
-    # Specificity = TN/(TN+FP)
-    tn, fp, fn, tp = confusion_matrix(y_test, y_pred).ravel()
-    specificity = tn / (tn+fp)
-  
-    # calculate average precision score
-    ap = average_precision_score(y_test, proba)
-    print('f1=%.3f auc=%.3f ap=%.3f' % (f1, auc_m, ap))
-    ddat = pd.DataFrame({'year': year, 'prec': precision, 'recall': recall, 'f1': f1, 'auc': auc_m, 'ap':ap, 'spec': specificity, 'sens':sensitivity})
-    sdat = pd.concat([sdat, ddat])
+        # calculate average precision score
+        ap = average_precision_score(y_test, proba)
+        print('f1=%.3f auc=%.3f ap=%.3f' % (f1, auc_m, ap))
+        ddat = pd.DataFrame({'year': year, 'prec': precision, 'recall': recall, 'f1': f1, 'auc': auc_m, 'ap':ap, 'spec': specificity, 'bas': bas, 'bas_t': bas_t})
+        sdat = pd.concat([sdat, ddat])
+    except:
+        print(f"{year} = NA")
+
+sdat.groupby('year').mean()
 
 
 # Save precision-recall data
 sdat = sdat.reset_index(drop=True)
-sdat.to_feather('data/illegal_10k_model_cross_val_dat.feather')
+sdat.to_feather('data/illegal_10k_cross_val_dat.feather')
 
 

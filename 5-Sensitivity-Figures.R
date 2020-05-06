@@ -20,7 +20,7 @@ mdat10km <- read_feather('~/Projects/predicting-illegal-fishing/data/illegal_10k
 # 2km Cross-validation results
 
 # Figure ***
-mdat2km$year_label <- paste0(mdat2km$year, " - F1: ", round(mdat2km$f1, 2), " AUC: ", round(mdat2km$auc, 2), " AP: ", round(mdat2km$ap, 2))
+mdat2km$year_label <- paste0(mdat2km$year, " - F1: ", round(mdat2km$f1, 2), " AUC: ", round(mdat2km$auc, 2), " AP: ", round(mdat2km$ap, 2), " AR: ", round(mdat2km$bas, 2))
 
 # Custom color palette
 cbp1 <- c("#999999", "#E69F00", "#56B4E9", "#009E73",
