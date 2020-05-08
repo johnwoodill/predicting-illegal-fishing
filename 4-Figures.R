@@ -440,17 +440,17 @@ dat <- left_join(dat, seascape_labels, by='seascape_class')
 dat2 <- dat %>% 
   group_by(mmsi) %>% 
   arrange(date) %>% 
-  mutate(seascape_lag = lag(nominal),
-         seascape_lead = lead(nominal),
+  mutate(seascape_lag = lag(seascape_name),
+         seascape_lead = lead(seascape_name),
          illegal_lag = lag(illegal),
          illegal_lead= lead(illegal))
 
-dat2$sea_change <- ifelse(dat2$nominal == dat2$seascape_lag, 0, 1)
+dat2$sea_change <- ifelse(dat2$seascape_name == dat2$seascape_lag, 0, 1)
 dat2$ill_change <- ifelse(dat2$illegal == 1, ifelse(dat2$illegal_lag == 0, 1, 0), 0)
 
 dat3 <- filter(dat2, sea_change == 1 & ill_change == 1)
 
-dat4 <- select(dat3, date, mmsi, sea_change, ill_change, seascape_class, seascape_lag, seascape_lead, nominal)
+dat4 <- select(dat3, date, mmsi, sea_change, ill_change, seascape_class, seascape_lag, seascape_lead)
 dat4 <- drop_na(dat4)
 
 p1 <- ggplot(dat4, aes(reorder(seascape_lag, seascape_lag, function(x) length(x)))) + 
@@ -463,7 +463,8 @@ p1 <- ggplot(dat4, aes(reorder(seascape_lag, seascape_lag, function(x) length(x)
   theme(panel.border = element_rect(colour = "black", fill=NA, size=1)) +
   geom_text(stat='count', aes(label=..count..), hjust=-.20, size = 3)
 p1
-ggsave("~/Projects/predicting-illegal-fishing/figures/Figure5.png", width=5, height=3)
+
+ggsave("~/Projects/predicting-illegal-fishing/figures/Figure5.png", width=6, height=3)
 
 
 
