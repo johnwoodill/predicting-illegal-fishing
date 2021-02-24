@@ -113,6 +113,11 @@ seadat$seascape_name <- factor(seadat$seascape_name, levels = c("Temperate Bloom
                                                                 "Temperate Transition", "Warm, Blooms, High Nuts",
                                                                 "Tropical Seas", "Subtropical Transition", "Other"))
 
+seadat <- filter(seadat, seascape_name != "Subtropical Transition")
+
+seadat$seascape_name <- factor(seadat$seascape_name, levels = c("Temperate Blooms Upwelling", 
+                                                                "Temperate Transition", "Warm, Blooms, High Nuts",
+                                                                "Tropical Seas", "Other"))
 
 
 # mapdat2 <- mapdat %>% 
@@ -135,26 +140,46 @@ LON2 = -51
 LAT1 = -51
 LAT2 = -39
 
+# Old inset map
+# loc = c(-58, -22)
+# map1 <- ggmap(get_map(loc, zoom = 3, maptype='toner-background', color='bw', source='stamen')) + 
+#   theme_nothing() + 
+#   geom_segment(x=-68, xend=-68, y=-39, yend=-51, color='red') +
+#   geom_segment(x=-68, xend=-51, y=-51, yend=-51, color='red') +
+#   geom_segment(x=-51, xend=-51, y=-51, yend=-39, color='red') +
+#   geom_segment(x=-68, xend=-51, y=-39, yend=-39, color='red') +
+#   labs(x=NULL, y=NULL) +
+#   theme(axis.title.x=element_blank(),
+#         axis.text.x=element_blank(),
+#         axis.ticks.x=element_blank(),
+#         axis.title.y=element_blank(),
+#         axis.text.y=element_blank(),
+#         axis.ticks.y=element_blank(),
+#         panel.border = element_rect(colour = "black", fill=NA, size=1)) +
+#   scale_y_continuous(expand=c(0,0)) +
+#   scale_x_continuous(expand=c(0,0)) +
+#   NULL
+# map1
 
-loc = c(-58, -22)
-map1 <- ggmap(get_map(loc, zoom = 3, maptype='toner-background', color='bw', source='stamen')) + 
-  theme_nothing() + 
+map1 <- ggplot(data = argentina) +
+  geom_polygon(data = canada, aes(x=long, y = lat, group = group), fill = "grey50") +
+  labs(y=NULL, x=NULL) +
+  theme_tufte() + 
+  coord_sf(xlim=c(-110, -25), ylim=c(-60, 30), expand = TRUE) +
   geom_segment(x=-68, xend=-68, y=-39, yend=-51, color='red') +
   geom_segment(x=-68, xend=-51, y=-51, yend=-51, color='red') +
   geom_segment(x=-51, xend=-51, y=-51, yend=-39, color='red') +
   geom_segment(x=-68, xend=-51, y=-39, yend=-39, color='red') +
-  labs(x=NULL, y=NULL) +
   theme(axis.title.x=element_blank(),
         axis.text.x=element_blank(),
         axis.ticks.x=element_blank(),
         axis.title.y=element_blank(),
         axis.text.y=element_blank(),
         axis.ticks.y=element_blank(),
-        panel.border = element_rect(colour = "black", fill=NA, size=1)) +
-  scale_y_continuous(expand=c(0,0)) +
-  scale_x_continuous(expand=c(0,0)) +
-  NULL
-map1
+        panel.border = element_rect(colour = "black", fill=NA, size=1),
+        panel.background = element_rect(fill = 'white')) +
+  scale_y_continuous(expand=c(0, 0)) +
+  scale_x_continuous(expand=c(0, 0))
 
 
 # ggplot(NULL) + 
@@ -165,25 +190,36 @@ map1
 
 # ggplot(seadat, aes(lon, lat, color=factor(seascape_name))) + geom_point()
 
+#33BBB2 - Temperate Blooms Upwelling
+#0957CA - Temperate Transition
+#DBC902 - Warm, Blooms, High Nuts.
+#96D842 - Tropical Seas
+#000CA0 - Subtropical Transition
+#87D4E6 - Other
+
+c("#33BBB2", "#0957CA", "#DBC902", "#96D842", "#000CA0", "#87D4E6")
+
+mapdat$illegal <- factor(mapdat$illegal, levels = c(0, 1), labels=c("Legal Vessel", "Illegal Vessel"))
+
 map2 <- 
   autoplot(bat, geom = c("raster", "contour")) +
   geom_raster(aes(fill=z)) +
   geom_contour(aes(z = z), colour = "white", alpha = 0.05) +
-  # scale_fill_gradientn(values = scales::rescale(c(-6600, 30, 40, 1500)),
-  #                      colors = c("lightsteelblue4", "lightsteelblue2", "#C6E0FC", 
-  #                                 "grey50", "grey70", "grey85")) +
   scale_fill_gradientn(values = scales::rescale(c(-6600, 30, 40, 1500)),
                        colors = c("#C6E0FC", "#C6E0FC", "#C6E0FC", 
                                   "grey50", "grey70", "grey85")) +
-  labs(x=NULL, y=NULL, color="Seascape") +
-  geom_point(data = seadat, aes(lon, lat, color=factor(seascape_name)), size=0.75) +
-  geom_path(data = eez[order(eez$order), ], aes(x=lon, y=lat), linetype = "dashed", color="orange", size=0.75) +
-  geom_point(data = filter(mapdat, illegal == 0), aes(lon1, lat1), color="black", size = 1) +
-  geom_point(data = filter(mapdat, illegal == 1), aes(lon1, lat1), color="red", size = 1) +
-  annotate("text", x=-63.9, y = -39.25, label="Patagonia Shelf, Argentina", size = 3, color='black', fontface=2) +
-  annotate("text", x=-65.6, y = -39.75, label="March 13, 2016", size = 3, color='black', fontface=2) +
-  annotate("text", x=-66.825, y = -40.25, label="Illegal ", size = 3, fontface=2, color="red") +
-  annotate("text", x=-64, y = -40.25, label=" / Legal Vessel ", size = 3, fontface=2, color="black") +
+  # scale_fill_gradientn(values = scales::rescale(c(-6600, 30, 40, 1500)),
+  #                      colors = c("white", "white", "grey30", "grey40")) +
+  labs(x=NULL, y=NULL, color=NULL) +
+  geom_point(data = seadat, aes(lon, lat, color=factor(seascape_name)), size=0.25, shape=15) +
+  geom_path(data = eez[order(eez$order), ], aes(x=lon, y=lat), linetype = "longdash", color="white", size=0.75) +
+  # geom_point(data = filter(mapdat, illegal == 0), aes(lon1, lat1), color="black", size = 1, shape = 15) +
+  geom_point(data = mapdat, aes(lon1, lat1, color=factor(illegal)), size = 1.5, shape = 15) +
+  geom_point(data = filter(mapdat, illegal == "Illegal Vessel"), aes(lon1, lat1), color="red", size = 1.25, shape = 15) +
+  annotate("text", x=-66, y = -39.50, label=" Argentina", size = 3, color='white', fontface=2) +
+  # annotate("text", x=-65.8, y = -39.75, label="March 13, 2016", size = 3, color='black', fontface=2) +
+  # annotate("text", x=-66.825, y = -40.25, label="Illegal ", size = 3, fontface=2, color="red") +
+  # annotate("text", x=-64.2, y = -40.25, label=" / Legal Vessel ", size = 3, fontface=2, color="black") +
   theme(axis.title.x=element_blank(),
         axis.text.x=element_blank(),
         axis.ticks.x=element_blank(),
@@ -193,43 +229,39 @@ map2 <-
         legend.direction = 'horizontal',
         legend.justification = 'center',
         legend.position = "bottom",
-        # legend.key=element_blank(),
         legend.key.size = unit(10, "cm"),
         legend.text = element_text(size=8.5, margin = margin(r = 14, unit = "pt")),
         legend.title = element_text(size=9),
         legend.background = element_blank(),
         legend.box.background = element_rect(colour = "black"),
         panel.grid = element_blank(),
-        panel.border = element_rect(colour = "black", fill=NA, size=1)) +
+        panel.border = element_rect(colour = "black", fill=NA, size=1),
+        legend.margin = margin(r=21,l=21,t=5,b=5)) +
   guides(fill = FALSE,
          color = guide_legend(title.position = "bottom",
                               title.hjust = 0.5,
                               override.aes=list(fill=NA, shape=15, size=4),
-                              keywidth=0.025,
-                              keyheight=0.025,
+                              keywidth=0.025, 
+                              keyheight=0.025, 
                               default.unit="inch",
-                              nrow = 3)) +
-                              
-                             # hjust = 0.5 centres the title horizontally
-                             # title.hjust = 0.5,
-                             #label.position = "top")
-                             
-  scale_color_manual(values = rev(brewer.pal(9, "Blues")[3:9])) +
-  # scale_color_manual(values = c("cornflowerblue", "deepskyblue", "deepskyblue4", "darkblue", "#C6E0FC", "#C6E0FC")) +
-  
-  # scale_color_gradientn(colours=brewer.pal(9, "OrRd"), limits=c(0, 200)) +
-  # scale_y_continuous(expand=c(0,0)) +
-  # scale_x_continuous(expand=c(0,0)) +
+                              ncol = 2)) +
+  # scale_color_manual(values = rev(brewer.pal(9, "Blues")[3:9])) +
+  scale_color_manual(breaks = c("Illegal Vessel", 
+                                "Temperate Blooms Upwelling", 
+                                "Temperate Transition", 
+                                "Warm, Blooms, High Nuts",
+                                "Legal Vessel",
+                                "Tropical Seas", 
+                                "Other"),
+    values = c("red", "#0957CA","#33BBB2", "#DBC902", "black", "#96D842", "#C6E0FC")) +
   NULL
 
-# map2
-
 # Draw plot
-ggdraw() + draw_plot(map2) + draw_plot(map1, .64, .21, height = .26, width = .25)
+ggdraw() + draw_plot(map2) + draw_plot(map1, x = .6525, y = .197, height = .26, width = .25)
 
 # Save both plots
 ggsave("~/Projects/predicting-illegal-fishing/figures/Figure1.png", width=5, height=5)
-#
+
 
 
 
@@ -494,14 +526,15 @@ p1 <- autoplot.bathy(bat, geom = c("contour", "raster"), coast=TRUE, show.legend
   geom_contour(aes(z = z), color = "white", alpha = 0.01, show.legend = FALSE) +
   scale_fill_gradientn(values = scales::rescale(c(-6600, 0, 39, 1500)),
                        colors = c("lightsteelblue2", "lightsteelblue2", "#C6E0FC", "grey50", "grey80")) +
-  geom_point(data = NULL, aes(x=-67.65, y = -40.05, shape=factor("temp_bloom")), size = 2, shape = 19, color="cornflowerblue") +
-  geom_point(data=sdat, aes(x=lon, y=lat, color=factor(seascape_class)), color="cornflowerblue", size = 0.5) +
-  geom_path(data = eez[order(eez$order), ], aes(x=lon, y=lat), linetype = "dashed", color="orange", size=0.75) +
-  geom_point(data=ildat, aes(lon1, lat1, color=factor(illegal)), size=0.5) +
+  geom_point(data = NULL, aes(x=-67.65, y = -40.05, shape=factor("temp_bloom")), size = 2, shape = 15, color="#0957CA") +
+  geom_point(data=sdat, aes(x=lon, y=lat, color=factor(seascape_class)), color="#0957CA", size = 0.5, shape=15) +
+  geom_path(data = eez[order(eez$order), ], aes(x=lon, y=lat), linetype = "longdash", color="white", size=0.75) +
+  geom_point(data=ildat, aes(lon1, lat1, color=factor(illegal)), size=1.5, shape=15) +
+  geom_point(data=filter(ildat, illegal == "Illegal"), aes(lon1, lat1, color=factor(illegal)), color="red", size=1.25, shape=15) +
   labs(x=NULL, y=NULL) +
-  annotate("text", x=-66, y = -39.25, label=date_, size = 4, color='black', fontface=2) +
+  annotate("text", x=-66.4, y = -39.25, label=date_, size = 4, color='black', fontface=2) +
   annotate("text", x=-65.1, y = -39.65, label="# Illegal Vessels = 76", size = 4, color='black', fontface=2) +
-  annotate("text", x=-62.75, y = -40.05, label="Temperate Blooms Upwelling", size = 4, fontface=2) +
+  annotate("text", x=-63.55, y = -40.05, label="Temperate Blooms Upwelling", size = 4, fontface=2) +
   annotate("text", x=-51.5, y = -39.25, label="(A)", size = 4, color='black', fontface=2) +
   theme(axis.title.x=element_blank(),
         axis.text.x=element_blank(),
@@ -520,9 +553,12 @@ p1 <- autoplot.bathy(bat, geom = c("contour", "raster"), coast=TRUE, show.legend
   annotate("segment", x=-Inf, xend=-Inf, y=-Inf, yend=Inf, color = "black", size=1) + # Left
   annotate("segment", x=Inf, xend=Inf, y=-Inf, yend=Inf, color = "black", size=1) + # Right
   annotate("segment", x=-Inf, xend=Inf, y=Inf, yend=Inf, color = "black", size=1) + # Top
-  scale_color_manual(values = c("Legal" = "black", "Illegal" = "red", "Temperate Blooms Upwelling" = "cornflowerblue")) +
+  guides(color = guide_legend(override.aes=list(fill=NA, shape=15, size=3))) +
+  scale_color_manual(values = c("Legal" = "black", "Illegal" = "red", "Temperate Blooms Upwelling" = "#0957CA")) +
   NULL
 # p1
+
+  
 
 # ggsave("~/Projects/predicting-illegal-fishing/figures/Figure6a.pdf", width=5, height = 5)
 
@@ -540,14 +576,15 @@ p2 <- autoplot.bathy(bat, geom = c("contour", "raster"), coast=TRUE, show.legend
   scale_fill_gradientn(values = scales::rescale(c(-6600, 0, 39, 1500)),
                        colors = c("lightsteelblue2", "lightsteelblue2", "#C6E0FC", "grey50", "grey80")) +
   
-  geom_point(data=sdat, aes(x=lon, y=lat, color=factor(seascape_class)), color="cornflowerblue", size = 0.5) +
-  geom_path(data = eez[order(eez$order), ], aes(x=lon, y=lat), linetype = "dashed", color="orange", size=0.75) +
-  geom_point(data=ildat, aes(lon1, lat1, color=factor(illegal)), size=0.5) +
+  geom_point(data=sdat, aes(x=lon, y=lat, color=factor(seascape_class)), color="#0957CA", size = 0.5, shape=15) +
+  geom_path(data = eez[order(eez$order), ], aes(x=lon, y=lat), linetype = "longdash", color="white", size=0.75) +
+  geom_point(data=ildat, aes(lon1, lat1, color=factor(illegal)), size=1.5, shape=15) +
+  geom_point(data=filter(ildat, illegal == "Illegal"), aes(lon1, lat1, color=factor(illegal)), color="red", size=1.25, shape=15) +
   labs(x=NULL, y=NULL) +
-  geom_point(data = NULL, aes(x=-67.65, y = -40.05, shape=factor("temp_bloom")), size = 2, shape = 19, color="cornflowerblue") +
-  annotate("text", x=-66, y = -39.25, label=date_, size = 4, color='black', fontface=2) +
+  geom_point(data = NULL, aes(x=-67.65, y = -40.05, shape=factor("temp_bloom")), size = 2, shape = 15, color="#0957CA") +
+  annotate("text", x=-66.4, y = -39.25, label=date_, size = 4, color='black', fontface=2) +
   annotate("text", x=-65.25, y = -39.65, label="# Illegal Vessels = 3", size = 4, color='black', fontface=2) +
-  annotate("text", x=-62.75, y = -40.05, label="Temperate Blooms Upwelling", size = 4, fontface=2) +
+  annotate("text", x=-63.55, y = -40.05, label="Temperate Blooms Upwelling", size = 4, fontface=2) +
   annotate("text", x=-51.5, y = -39.25, label="(B)", size = 4, color='black', fontface=2) +
   theme(axis.title.x=element_blank(),
         axis.text.x=element_blank(),
@@ -566,7 +603,8 @@ p2 <- autoplot.bathy(bat, geom = c("contour", "raster"), coast=TRUE, show.legend
   annotate("segment", x=-Inf, xend=-Inf, y=-Inf, yend=Inf, color = "black", size=1) + # Left
   annotate("segment", x=Inf, xend=Inf, y=-Inf, yend=Inf, color = "black", size=1) + # Right
   annotate("segment", x=-Inf, xend=Inf, y=Inf, yend=Inf, color = "black", size=1) + # Top
-  scale_color_manual(values = c("Legal" = "black", "Illegal" = "red", "Temperate Blooms Upwelling" = "cornflowerblue")) +
+  guides(color = guide_legend(override.aes=list(fill=NA, shape=15, size=3))) +
+  scale_color_manual(values = c("Legal" = "black", "Illegal" = "red", "Temperate Blooms Upwelling" = "#0957CA")) +
   NULL
 #p2
 
