@@ -199,7 +199,7 @@ map1 <- ggplot(data = argentina) +
 
 c("#33BBB2", "#0957CA", "#DBC902", "#96D842", "#000CA0", "#87D4E6")
 
-mapdat$illegal <- factor(mapdat$illegal, levels = c(0, 1), labels=c("Legal Vessel", "Illegal Vessel"))
+mapdat$illegal <- factor(mapdat$illegal, levels = c(0, 1), labels=c("Other Vessel", "DWF Vessel in EEZ"))
 
 map2 <- 
   autoplot(bat, geom = c("raster", "contour")) +
@@ -215,7 +215,7 @@ map2 <-
   geom_path(data = eez[order(eez$order), ], aes(x=lon, y=lat), linetype = "longdash", color="white", size=0.75) +
   # geom_point(data = filter(mapdat, illegal == 0), aes(lon1, lat1), color="black", size = 1, shape = 15) +
   geom_point(data = mapdat, aes(lon1, lat1, color=factor(illegal)), size = 1.5, shape = 15) +
-  geom_point(data = filter(mapdat, illegal == "Illegal Vessel"), aes(lon1, lat1), color="red", size = 1.25, shape = 15) +
+  geom_point(data = filter(mapdat, illegal == "DWF Vessel in EEZ"), aes(lon1, lat1), color="red", size = 1.25, shape = 15) +
   annotate("text", x=-66, y = -39.50, label=" Argentina", size = 3, color='white', fontface=2) +
   # annotate("text", x=-65.8, y = -39.75, label="March 13, 2016", size = 3, color='black', fontface=2) +
   # annotate("text", x=-66.825, y = -40.25, label="Illegal ", size = 3, fontface=2, color="red") +
@@ -246,11 +246,11 @@ map2 <-
                               default.unit="inch",
                               ncol = 2)) +
   # scale_color_manual(values = rev(brewer.pal(9, "Blues")[3:9])) +
-  scale_color_manual(breaks = c("Illegal Vessel", 
+  scale_color_manual(breaks = c("DWF Vessel in EEZ", 
                                 "Temperate Blooms Upwelling", 
                                 "Temperate Transition", 
                                 "Warm, Blooms, High Nuts",
-                                "Legal Vessel",
+                                "Other Vessel",
                                 "Tropical Seas", 
                                 "Other"),
     values = c("red", "#0957CA","#33BBB2", "#DBC902", "black", "#96D842", "#C6E0FC")) +
@@ -266,7 +266,7 @@ ggsave("~/Projects/predicting-illegal-fishing/figures/Figure1.png", width=5, hei
 
 
 
-# Figure 2. Number of illegal events per month and year
+# Figure 2. Number of  events per month and year
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 dat$year <- year(dat$date)
 dat$month <- month(dat$date)
@@ -288,7 +288,7 @@ ggplot(pdat, aes(month_name, total_illegal, fill=factor(year))) +
   geom_bar(stat='identity', position = position_stack(reverse = TRUE), width = 0.75) +
   scale_fill_grey() +
   theme_tufte(12) +
-  labs(x=NULL, y="Count of Illegal Chinese \n Vessels Fishing") +
+  labs(x=NULL, y="Count of Distant Water Fishing \n Vessel Events within EEZ") +
   theme(legend.position = c(.90, .825),
         legend.direction = 'vertical',
         legend.justification = 'center',
@@ -485,8 +485,29 @@ dat3 <- filter(dat2, sea_change == 1 & ill_change == 1)
 dat4 <- select(dat3, date, mmsi, sea_change, ill_change, seascape_class, seascape_lag, seascape_lead)
 dat4 <- drop_na(dat4)
 
+dat4 <- filter(dat4, seascape_lag %in% c("TEMPERATE BLOOMS UPWELLING", 
+                                         "TEMPERATE TRANSITION",
+                                         "WARM, BLOOMS, HIGH NUTS", 
+                                         "SUBPOLAR",
+                                         "SUBTROPICAL TRANSITION \n LOW NUTRIENT STRESS")) %>% 
+  as.data.frame()
+
+dat4$seascape_lag <- factor(dat4$seascape_lag, 
+               levels = c("TEMPERATE BLOOMS UPWELLING", 
+                          "TEMPERATE TRANSITION",
+                          "WARM, BLOOMS, HIGH NUTS", 
+                          "SUBPOLAR",
+                          "SUBTROPICAL TRANSITION \n LOW NUTRIENT STRESS"),
+               labels = c("Temperate Blooms Upwelling",
+                          "Temperate Transition",
+                          "Warm, Blooms, \n High Nutrient",
+                          "Subpolar",
+                          "Subtropical Transition \n Low Nutrient Stress"))
+
+levels(dat4$seascape_lag)
+
 p1 <- ggplot(dat4, aes(reorder(seascape_lag, seascape_lag, function(x) length(x)))) + 
-  labs(x=NULL, y="Number of Vessels Moving \n from Legal to Illegal") +
+  labs(x=NULL, y="Number of Distant Water Fishing Vessels") +
   theme_tufte(12) +
   geom_bar() + 
   coord_flip() +
@@ -516,7 +537,7 @@ sdat = filter(dat, !is.na(seascape_class) & date == '2016-02-26' & (seascape_cla
 sdat$seascape_class <- "Temperate Blooms Upwelling"
 
 ildat = filter(idat, date == '2016-02-26')
-ildat$illegal <- ifelse(ildat$illegal == 1, "Illegal", "Legal")
+ildat$illegal <- ifelse(ildat$illegal == 1, "DWF Vessel in EEZ", "Other Vessel")
 date_ = "2016-02-26"
 
 
@@ -530,10 +551,10 @@ p1 <- autoplot.bathy(bat, geom = c("contour", "raster"), coast=TRUE, show.legend
   geom_point(data=sdat, aes(x=lon, y=lat, color=factor(seascape_class)), color="#0957CA", size = 0.5, shape=15) +
   geom_path(data = eez[order(eez$order), ], aes(x=lon, y=lat), linetype = "longdash", color="white", size=0.75) +
   geom_point(data=ildat, aes(lon1, lat1, color=factor(illegal)), size=1.5, shape=15) +
-  geom_point(data=filter(ildat, illegal == "Illegal"), aes(lon1, lat1, color=factor(illegal)), color="red", size=1.25, shape=15) +
+  geom_point(data=filter(ildat, illegal == "DWF Vessel in EEZ"), aes(lon1, lat1, color=factor(illegal)), color="red", size=1.25, shape=15) +
   labs(x=NULL, y=NULL) +
   annotate("text", x=-66.4, y = -39.25, label=date_, size = 4, color='black', fontface=2) +
-  annotate("text", x=-65.1, y = -39.65, label="# Illegal Vessels = 76", size = 4, color='black', fontface=2) +
+  annotate("text", x=-65.20, y = -39.65, label="# DWF Vessels = 76", size = 4, color='black', fontface=2) +
   annotate("text", x=-63.55, y = -40.05, label="Temperate Blooms Upwelling", size = 4, fontface=2) +
   annotate("text", x=-51.5, y = -39.25, label="(A)", size = 4, color='black', fontface=2) +
   theme(axis.title.x=element_blank(),
@@ -542,7 +563,8 @@ p1 <- autoplot.bathy(bat, geom = c("contour", "raster"), coast=TRUE, show.legend
         axis.title.y=element_blank(),
         axis.text.y=element_blank(),
         axis.ticks.y=element_blank(),
-        legend.position = c(.901, 0.07),
+        # legend.position = c(.901, 0.07),
+        legend.position = "none",
         legend.margin=margin(t = -.15, r = .25, b = .05, l = .05, unit='cm'),
         panel.grid = element_blank(),
         legend.background = element_rect(colour = 'black', fill = 'white', linetype='solid'),
@@ -554,7 +576,7 @@ p1 <- autoplot.bathy(bat, geom = c("contour", "raster"), coast=TRUE, show.legend
   annotate("segment", x=Inf, xend=Inf, y=-Inf, yend=Inf, color = "black", size=1) + # Right
   annotate("segment", x=-Inf, xend=Inf, y=Inf, yend=Inf, color = "black", size=1) + # Top
   guides(color = guide_legend(override.aes=list(fill=NA, shape=15, size=3))) +
-  scale_color_manual(values = c("Legal" = "black", "Illegal" = "red", "Temperate Blooms Upwelling" = "#0957CA")) +
+  scale_color_manual(values = c("Other Vessel" = "black", "DW Vessel inside EEZ" = "red", "Temperate Blooms Upwelling" = "#0957CA")) +
   NULL
 # p1
 
@@ -567,7 +589,7 @@ p1 <- autoplot.bathy(bat, geom = c("contour", "raster"), coast=TRUE, show.legend
 sdat = filter(dat, !is.na(seascape_class) & date == '2016-01-25' & (seascape_class %in% c(14)))
 sdat$seascape_class <- "Temperate Blooms Upwelling"
 ildat = filter(idat, date == '2016-01-25')
-ildat$illegal <- ifelse(ildat$illegal == 1, "Illegal", "Legal")
+ildat$illegal <- ifelse(ildat$illegal == 1, "DWF Vessel in EEZ", "Other Vessel")
 date_ = "2016-01-25"
 
 p2 <- autoplot.bathy(bat, geom = c("contour", "raster"), coast=TRUE, show.legend = FALSE) +
@@ -579,11 +601,11 @@ p2 <- autoplot.bathy(bat, geom = c("contour", "raster"), coast=TRUE, show.legend
   geom_point(data=sdat, aes(x=lon, y=lat, color=factor(seascape_class)), color="#0957CA", size = 0.5, shape=15) +
   geom_path(data = eez[order(eez$order), ], aes(x=lon, y=lat), linetype = "longdash", color="white", size=0.75) +
   geom_point(data=ildat, aes(lon1, lat1, color=factor(illegal)), size=1.5, shape=15) +
-  geom_point(data=filter(ildat, illegal == "Illegal"), aes(lon1, lat1, color=factor(illegal)), color="red", size=1.25, shape=15) +
+  geom_point(data=filter(ildat, illegal == "DWF Vessel in EEZ"), aes(lon1, lat1, color=factor(illegal)), color="red", size=1.25, shape=15) +
   labs(x=NULL, y=NULL) +
   geom_point(data = NULL, aes(x=-67.65, y = -40.05, shape=factor("temp_bloom")), size = 2, shape = 15, color="#0957CA") +
   annotate("text", x=-66.4, y = -39.25, label=date_, size = 4, color='black', fontface=2) +
-  annotate("text", x=-65.25, y = -39.65, label="# Illegal Vessels = 3", size = 4, color='black', fontface=2) +
+  annotate("text", x=-65.40, y = -39.65, label="# DWF Vessels = 3", size = 4, color='black', fontface=2) +
   annotate("text", x=-63.55, y = -40.05, label="Temperate Blooms Upwelling", size = 4, fontface=2) +
   annotate("text", x=-51.5, y = -39.25, label="(B)", size = 4, color='black', fontface=2) +
   theme(axis.title.x=element_blank(),
@@ -592,7 +614,7 @@ p2 <- autoplot.bathy(bat, geom = c("contour", "raster"), coast=TRUE, show.legend
         axis.title.y=element_blank(),
         axis.text.y=element_blank(),
         axis.ticks.y=element_blank(),
-        legend.position = c(.901, 0.07),
+        legend.position = c(.825, 0.07),
         legend.margin=margin(t = -.15, r = .25, b = .05, l = .05, unit='cm'),
         panel.grid = element_blank(),
         legend.background = element_rect(colour = 'black', fill = 'white', linetype='solid'),
@@ -604,7 +626,7 @@ p2 <- autoplot.bathy(bat, geom = c("contour", "raster"), coast=TRUE, show.legend
   annotate("segment", x=Inf, xend=Inf, y=-Inf, yend=Inf, color = "black", size=1) + # Right
   annotate("segment", x=-Inf, xend=Inf, y=Inf, yend=Inf, color = "black", size=1) + # Top
   guides(color = guide_legend(override.aes=list(fill=NA, shape=15, size=3))) +
-  scale_color_manual(values = c("Legal" = "black", "Illegal" = "red", "Temperate Blooms Upwelling" = "#0957CA")) +
+  scale_color_manual(values = c("Other Vessel" = "black", "DWF Vessel in EEZ" = "red", "Temperate Blooms Upwelling" = "#0957CA")) +
   NULL
 #p2
 
