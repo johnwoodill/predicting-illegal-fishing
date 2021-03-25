@@ -155,7 +155,7 @@ sdat.to_feather('data/illegal_cross_val_dat.feather')
 
 # Feature Importance
 feadat = feadat.reset_index(drop=True)
-feadat.to_feather('data/feature_importance_rf_illegal.feather')
+feadat.to_csv('data/feature_importance_rf_illegal.csv')
 
 
 # Feature importance

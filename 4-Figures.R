@@ -288,7 +288,7 @@ ggplot(pdat, aes(month_name, total_illegal, fill=factor(year))) +
   geom_bar(stat='identity', position = position_stack(reverse = TRUE), width = 0.75) +
   scale_fill_grey() +
   theme_tufte(12) +
-  labs(x=NULL, y="Count of Distant Water Fishing \n Vessel Events within EEZ") +
+  labs(x=NULL, y="Count of Distant-Water Fishing \n Vessel Events within EEZ") +
   theme(legend.position = c(.90, .825),
         legend.direction = 'vertical',
         legend.justification = 'center',
@@ -309,19 +309,20 @@ ggsave("~/Projects/predicting-illegal-fishing/figures/Figure2.png", width=5, hei
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 mdat <- read_feather('~/Projects/predicting-illegal-fishing/data/illegal_cross_val_dat.feather')
 
-mdat$year_label <- paste0(mdat$year, " - F1: ", round(mdat$f1, 2), " AP: ", round(mdat$ap, 2), " AR: ", round(mdat$bas, 2), " AUC: ", round(mdat$auc, 2))
+mdat$year_label <- paste0(mdat$year, " - F1: ", format(round(mdat$f1, 2), 2), " AP: ", format(round(mdat$ap, 2), 2), " AR: ", format(round(mdat$bas, 2), 2), " AUC: ", format(round(mdat$auc, 2), 2))
 
 # Custom color palette
 cbp1 <- c("#999999", "#E69F00", "#56B4E9", "#009E73",
           "#0072B2", "#D55E00", "#CC79A7")
 
-ggplot(mdat, aes(recall, prec, color=factor(year_label))) + 
+ggplot(mdat, aes(recall, prec, linetype=factor(year_label), color=factor(year_label))) + 
   labs(x="Recall", y="Precision") +
   theme_tufte(12) +
   scale_color_manual(values = viridis(6, option = "D")) +
+  scale_linetype_manual(values = c(1, 2, 3, 4, 5)) +
   geom_line() +
   theme(legend.background = element_rect(colour = 'grey', fill = 'white', linetype='solid'),
-        legend.position = c(.30, .24),
+        legend.position = c(.255, .23),
         legend.direction = 'vertical',
         legend.justification = 'center',
         legend.text = element_text(size=8),
@@ -347,9 +348,8 @@ coord_radar <- function (theta = "x", start = 0, direction = 1) {
           is_linear = function(coord) TRUE)
 }
 
-fea <- read_feather('~/Projects/predicting-illegal-fishing/data/feature_importance_rf_illegal.feather')
+fea <- as.data.frame(read_csv('~/Projects/predicting-illegal-fishing/data/feature_importance_rf_illegal.csv'))
 fea_ocean <- read_csv('~/Projects/predicting-illegal-fishing/data/feature_importance_oceandata_rf_illegal.csv')
-
 
 fea_dat <- data.frame("variable" = c("distance_to_eez_km", "eez", "coast_dist_km", "lon1", "port_dist_km", "lat1",
                                    "sst", "chlor_a", "fishing_hours", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul",
@@ -378,13 +378,16 @@ fea <- fea %>%
   group_by(year) %>% 
   arrange(-importance) %>% 
   do(head(., n = 5)) %>% 
-  ungroup()
+  ungroup() %>% 
+  as.data.frame()
 
 
 fead <- fea %>% 
   group_by(year) %>% 
   arrange(labels, year) %>% 
-  ungroup()
+  ungroup() %>% 
+  as.data.frame()
+
 fead
 
 
@@ -408,6 +411,7 @@ rp1 <- ggplot(fead, aes(x=labels, y=importance, color=factor(year), group=factor
   annotate("text", x=.5, y=0.15, label = "0.15", color='darkgrey',vjust=-.45) + 
   NULL
   
+rp1
 
 fea_ocean <- left_join(fea_ocean, fea_dat, by = "variable")
 fea_ocean <- dplyr::select(fea_ocean, labels, importance, year)
@@ -456,6 +460,8 @@ rp2 <- ggplot(fead, aes(x=labels, y=importance, color=factor(year), group=factor
 plot_grid(rp1, rp2, ncol=2, labels = c("A", "B"))
 
 ggsave("~/Projects/predicting-illegal-fishing/figures/Figure4.png", width = 10, height = 4.5)
+
+
 
 # Figure 5. Movement from legal to illegal seascape
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -507,7 +513,7 @@ dat4$seascape_lag <- factor(dat4$seascape_lag,
 levels(dat4$seascape_lag)
 
 p1 <- ggplot(dat4, aes(reorder(seascape_lag, seascape_lag, function(x) length(x)))) + 
-  labs(x=NULL, y="Number of Distant Water Fishing Vessels") +
+  labs(x=NULL, y="Number of Distant-Water Fishing Vessels") +
   theme_tufte(12) +
   geom_bar() + 
   coord_flip() +
