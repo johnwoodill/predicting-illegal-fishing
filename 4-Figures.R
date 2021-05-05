@@ -383,18 +383,21 @@ fea <- fea %>%
 
 
 fead <- fea %>% 
-  group_by(year) %>% 
-  arrange(labels, year) %>% 
+  group_by(labels) %>% 
+  summarise(importance = mean(importance))
   ungroup() %>% 
   as.data.frame()
 
-fead
+fead <- as.data.frame(fead)
+fead <- rbind(fead, head(fead, 1))
 
 
-rp1 <- ggplot(fead, aes(x=labels, y=importance, color=factor(year), group=factor(year))) + 
-  geom_polygon(fill=NA) +
+
+rp1 <- ggplot(fead, aes(x=labels, y=importance, group=0)) + 
+  geom_polygon(alpha = 0.2) +
+  geom_path() +
   labs(y=NULL, x=NULL, color=NULL) + 
-  geom_point(size = 1) +
+  geom_point(size = 0.5) +
   theme_bw() +
   guides(color = guide_legend(keywidth = 1, keyheight = 1,
                        override.aes = list(size = .5, shape = NA))) +
@@ -404,11 +407,12 @@ rp1 <- ggplot(fead, aes(x=labels, y=importance, color=factor(year), group=factor
         axis.text.y = element_blank(),
         axis.ticks.y = element_blank()) +
   coord_radar() +
-  annotate("text", x=.5, y=0.35, label = "0.35", color='darkgrey',vjust=-.45) + 
-  annotate("text", x=.5, y=0.30, label = "0.30", color='darkgrey',vjust=-.45) + 
-  annotate("text", x=.5, y=0.25, label = "0.25", color='darkgrey',vjust=-.45) + 
-  annotate("text", x=.5, y=0.20, label = "0.20", color='darkgrey',vjust=-.45) + 
-  annotate("text", x=.5, y=0.15, label = "0.15", color='darkgrey',vjust=-.45) + 
+  annotate("text", x=.5, y=0.50, label = "0.50", color='darkgrey',vjust=-.45) +
+  annotate("text", x=.5, y=0.40, label = "0.40", color='darkgrey',vjust=-.45) +
+  annotate("text", x=.5, y=0.30, label = "0.30", color='darkgrey',vjust=-.45) +
+  annotate("text", x=.5, y=0.20, label = "0.20", color='darkgrey',vjust=-.45) +
+  annotate("text", x=.5, y=0.10, label = "0.10", color='darkgrey',vjust=-.45) +
+  annotate("text", x=.5, y=0.00, label = "", color='darkgrey',vjust=-.45) +
   NULL
   
 rp1
@@ -429,22 +433,25 @@ top_ocean <- fea_ocean2$labels
 
 fead <- fea_ocean %>%
   filter(labels %in% top_ocean) %>% 
-  group_by(year) %>% 
-  arrange(labels, year) %>% 
+  group_by(labels) %>% 
+  summarise(importance = mean(importance)) %>% 
   ungroup()
 
 fead$labels <- factor(fead$labels, levels=c("Chlorophyll", "February","Seascape 14", "January", "Sea Surface Temp."))
 
+fead <- rbind(fead, head(fead, 1))
 
-rp2 <- ggplot(fead, aes(x=labels, y=importance, color=factor(year), group=factor(year))) + 
-  geom_polygon(fill=NA) +
+
+rp2 <- ggplot(fead, aes(x=labels, y=importance, group=0)) + 
+  geom_polygon(alpha=0.2) +
   labs(y=NULL, x=NULL, color=NULL) + 
-  geom_point(size = 1) +
+  geom_point(size = 0.5) +
+  geom_path() +
   theme_bw(12) +
   guides(color = guide_legend(keywidth = 1, keyheight = 1,
                        override.aes = list(size = .5, shape = NA))) +
   theme(panel.grid.major = element_line(colour = "grey"), 
-        legend.position = c(.9, 0.15),
+        # legend.position = c(.9, 0.15),
         axis.text.y = element_blank(),
         axis.ticks.y = element_blank()) +
   # scale_x_discrete(expand = c(0, 0)) +
