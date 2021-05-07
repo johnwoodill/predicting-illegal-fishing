@@ -73,7 +73,8 @@ for year in range(2012, 2017):
     y_test = y_test['illegal']
    
    # Base RF Model (faster)
-    clf = RandomForestClassifier(n_estimators = 100, random_state=123).fit(X_train, y_train)
+    clf = RandomForestClassifier(n_estimators = 100, 
+                                 random_state=123).fit(X_train, y_train)
 
     # Hyper-parameter tuned RF model
     # clf = RandomForestClassifier(n_estimators=1600, 
@@ -103,7 +104,10 @@ for year in range(2012, 2017):
     specificity = tn / (tn+fp)
         
     # Get Feature importance
-    fea_import = pd.DataFrame({'variable': X_train.columns , 'importance': clf.feature_importances_, 'year': year})
+    fea_import = pd.DataFrame({'variable': X_train.columns , 
+                               'importance': clf.feature_importances_, 
+                               'year': year})
+    
     feadat = pd.concat([feadat, fea_import])
     
     # Balanced accuracy score metric
@@ -135,7 +139,9 @@ sdat = sdat.reset_index(drop=True)
 sdat.to_feather('data/illegal_cross_val_dat.feather')
 
 # Save Feature importance
-fea_import = pd.DataFrame({'variable': X_train.columns , 'importance': clf.feature_importances_})
+fea_import = pd.DataFrame({'variable': X_train.columns , 
+                           'importance': clf.feature_importances_})
+
 fea_import = fea_import.sort_values('importance', ascending=False)
 fea_import = fea_import.reset_index(drop=True)
 fea_import.to_feather('data/feature_importance_rf_illegal.feather')
