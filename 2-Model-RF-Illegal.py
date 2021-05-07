@@ -10,8 +10,8 @@ dat = pd.read_feather('data/full_gfw_10d_effort_model_data_8DAY_2012-01-01_2016-
 
 # If illegally operating inside EEZ (!= ARG)
 dat = dat.assign(illegal = np.where(((dat['eez'] == True) &
-                                     (dat['fishing_hours'] > 0)
-                                     & (dat['flag'] != 'ARG') ), 1, 0))
+                                     (dat['fishing_hours'] > 0) &
+                                     (dat['flag'] != 'ARG') ), 1, 0))
 
 # Buffer by 2km (sensitivity analysis)
 dat = dat.assign(illegal_2km = np.where(((dat['illegal'] == True) &
