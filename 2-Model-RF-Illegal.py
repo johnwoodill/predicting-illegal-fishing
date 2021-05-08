@@ -101,23 +101,16 @@ for year in range(2012, 2017):
     # calculate precision-recall AUC
     auc_m = auc(recall, precision)
 
+    # Calculate average precision score
+    ap = average_precision_score(y_test, pred_proba)
+
     # Calc specificity = TN/(TN+FP)
     tn, fp, fn, tp = confusion_matrix(y_test, y_pred).ravel()
     specificity = tn / (tn + fp)
 
-    # Get Feature importance
-    fea_import = pd.DataFrame({'variable': X_train.columns,
-                               'importance': clf.feature_importances_,
-                               'year': year})
-
-    feadat = pd.concat([feadat, fea_import])
-
     # Balanced accuracy score metric
     bas = balanced_accuracy_score(y_test, y_pred)
     bas_t = balanced_accuracy_score(y_test, y_pred, adjusted=True)
-
-    # Calculate average precision score
-    ap = average_precision_score(y_test, pred_proba)
 
     print('f1=%.3f auc=%.3f ap=%.3f' % (f1, auc_m, ap))
 
@@ -134,6 +127,13 @@ for year in range(2012, 2017):
 
     # Bind with all results
     sdat = pd.concat([sdat, ddat])
+
+    # Get Feature importance
+    fea_import = pd.DataFrame({'variable': X_train.columns,
+                               'importance': clf.feature_importances_,
+                               'year': year})
+
+    feadat = pd.concat([feadat, fea_import])
 
 
 # Results
