@@ -158,9 +158,6 @@ sdat = sdat.reset_index(drop=True)
 sdat.to_feather('data/illegal_cross_val_dat.feather')
 
 # Save Feature importance
-fea_import = pd.DataFrame({'variable': X_train.columns,
-                           'importance': clf.feature_importances_})
-
-fea_import = fea_import.sort_values('importance', ascending=False)
-fea_import = fea_import.reset_index(drop=True)
-fea_import.to_feather('data/feature_importance_rf_illegal.feather')
+feadat = feadat.sort_values('importance', ascending=False)
+feadat = feadat.reset_index(drop=True)
+feadat.to_feather('data/feature_importance_rf_illegal.feather')
