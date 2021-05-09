@@ -31,7 +31,8 @@ dat = dat.assign(year=pd.DatetimeIndex(dat['date']).year,
 
 # Convert month number to name using calendar lib
 dat = dat.assign(month_abbr=dat.apply(
-    lambda x: calendar.month_abbr[x['month']], 1))
+    lambda x: calendar.month_abbr[x['month']], 1)
+)
 
 # Keep variables (baseline model)
 moddat = dat[['illegal', 'year', 'month_abbr', 'seascape_class',
@@ -139,19 +140,19 @@ for year in range(2012, 2017):
 
 # Results
 # Training Years: [2016 2013 2015 2014] - Test Year: [2012]
-# f1=0.687 auc=0.835 ap=0.834
+# f1=0.687   auc=0.835   ap=0.834
 
 # Training Years: [2016 2015 2012 2014] - Test Year: [2013]
-# f1=0.865 auc=0.903 ap=0.900
+# f1=0.865   auc=0.903   ap=0.900
 
 # Training Years: [2016 2013 2015 2012] - Test Year: [2014]
-# f1=0.736 auc=0.916 ap=0.913
+# f1=0.736   auc=0.916    ap=0.913
 
 # Training Years: [2016 2013 2012 2014] - Test Year: [2015]
-# f1=0.872 auc=0.936 ap=0.934
+# f1=0.872   auc=0.936   ap=0.934
 
 # Training Years: [2013 2015 2012 2014] - Test Year: [2016]
-# f1=0.830 auc=0.896 ap=0.893
+# f1=0.830   auc=0.896   ap=0.893
 
 
 # Save precision-recall data
