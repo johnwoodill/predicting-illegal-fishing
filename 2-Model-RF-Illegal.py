@@ -1,14 +1,15 @@
 import pandas as pd
 import numpy as np
+import calendar
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import (average_precision_score, auc,
                              precision_recall_curve, f1_score,
                              confusion_matrix, balanced_accuracy_score)
-import calendar
+
 
 # Load full 8Day data from data-step
-dat = pd.read_feather((f"data/full_gfw_10d_effort_model_data_8DAY_2012-01-01_"
-                       f"2016-12-26.feather"))
+dat = pd.read_feather((f"data/full_gfw_10d_effort_model_data_8DAY_"
+                       f"2012-01-01_2016-12-26.feather"))
 
 # If operating inside EEZ, with positive fishing hours, and != ARG
 dat = dat.assign(illegal=np.where(((dat['eez'] == True) &
@@ -28,7 +29,7 @@ sum(dat.illegal_2km)/len(dat)
 dat = dat.assign(year=pd.DatetimeIndex(dat['date']).year,
                  month=pd.DatetimeIndex(dat['date']).month)
 
-# Convert month number to name
+# Convert month number to name using calendar lib
 dat = dat.assign(month_abbr=dat.apply(
     lambda x: calendar.month_abbr[x['month']], 1))
 
@@ -46,7 +47,7 @@ moddat = pd.concat([moddat, seascape_dummies, month_dummies], axis=1)
 # Drop na
 moddat = moddat.dropna()
 
-# Get X, y
+# Get y, X
 y = moddat[['year', 'illegal']]
 
 # Drop cat. variables and dep variable
@@ -63,7 +64,7 @@ for year in range(2012, 2017):
     # Get test data
     X_test, y_test = X[X['year'] == year], y[y['year'] == year]
 
-    print(f"Training Years: {X_train['year'].unique()} -"
+    print(f"Training Years: {X_train['year'].unique()} - "
           f"Test Year: {X_test['year'].unique()}")
 
     # Drop year
@@ -101,9 +102,9 @@ for year in range(2012, 2017):
     auc_m = auc(recall, precision)
 
     # Calculate average precision score
-    ap = average_precision_score(y_test, pred_proba)
+    ap_m = average_precision_score(y_test, pred_proba)
 
-    # Calc specificity = TN/(TN+FP)
+    # Calc specificity = tn / (tn + fp) 
     tn, fp, fn, tp = confusion_matrix(y_test, y_pred).ravel()
     specificity = tn / (tn + fp)
 
@@ -111,7 +112,7 @@ for year in range(2012, 2017):
     bas = balanced_accuracy_score(y_test, y_pred)
     bas_t = balanced_accuracy_score(y_test, y_pred, adjusted=True)
 
-    print('f1=%.3f auc=%.3f ap=%.3f' % (f1, auc_m, ap))
+    print('f1=%.3f   auc=%.3f   ap=%.3f' % (f1, auc_m, ap_m))
 
     # Dataframe with model validation metrics
     ddat = pd.DataFrame({'year': year,
@@ -119,7 +120,7 @@ for year in range(2012, 2017):
                          'recall': recall,
                          'f1': f1,
                          'auc': auc_m,
-                         'ap': ap,
+                         'ap': ap_m,
                          'spec': specificity,
                          'bas': bas,
                          'bas_t': bas_t})
@@ -132,6 +133,7 @@ for year in range(2012, 2017):
                                'variable': X_train.columns,
                                'importance': clf.feature_importances_})
 
+    # Bind feature importance
     feadat = pd.concat([feadat, fea_import])
 
 
