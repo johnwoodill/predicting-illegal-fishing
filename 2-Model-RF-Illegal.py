@@ -38,7 +38,7 @@ dat = dat.assign(month_abbr=dat.apply(
 moddat = dat[['illegal', 'year', 'month_abbr', 'seascape_class',
               'sst', 'chlor_a', 'lon1', 'lat1', 'eez']]
 
-# Dummy variables for seascape and dummies
+# Dummy variables for seascape and month
 seascape_dummies = pd.get_dummies(moddat['seascape_class'], prefix='seascape')
 month_dummies = pd.get_dummies(moddat['month_abbr'])
 
