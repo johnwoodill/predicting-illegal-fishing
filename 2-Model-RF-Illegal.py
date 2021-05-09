@@ -32,7 +32,7 @@ dat = dat.assign(year=pd.DatetimeIndex(dat['date']).year,
 dat = dat.assign(month_abbr=dat.apply(
     lambda x: calendar.month_abbr[x['month']], 1))
 
-# Keep variables RHS (baseline model)
+# Keep variables (baseline model)
 moddat = dat[['illegal', 'year', 'month_abbr', 'seascape_class',
               'sst', 'chlor_a', 'lon1', 'lat1', 'eez']]
 
@@ -54,7 +54,7 @@ X = moddat.drop(columns=['month_abbr', 'illegal', 'seascape_class'])
 
 # Cross-validate model by year
 sdat = pd.DataFrame()        # Dataframe for binding results
-feadat = pd.DataFrame()      # Dataframe for bind feature impt.
+feadat = pd.DataFrame()      # Dataframe for binding feature impt.
 
 for year in range(2012, 2017):
     # Get training data
@@ -75,8 +75,7 @@ for year in range(2012, 2017):
     y_test = y_test['illegal']
 
     # Base RF Model (faster)
-    clf = RandomForestClassifier(n_estimators=100,
-                                 random_state=123).fit(X_train, y_train)
+    clf = RandomForestClassifier(random_state=123).fit(X_train, y_train)
 
     # Hyper-parameter tuned RF model
     # clf = RandomForestClassifier(n_estimators=1600,
@@ -129,9 +128,9 @@ for year in range(2012, 2017):
     sdat = pd.concat([sdat, ddat])
 
     # Get Feature importance
-    fea_import = pd.DataFrame({'variable': X_train.columns,
-                               'importance': clf.feature_importances_,
-                               'year': year})
+    fea_import = pd.DataFrame({'year': year,
+                               'variable': X_train.columns,
+                               'importance': clf.feature_importances_})
 
     feadat = pd.concat([feadat, fea_import])
 
